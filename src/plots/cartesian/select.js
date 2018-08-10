@@ -324,19 +324,31 @@ function prepSelect(e, startX, startY, dragOptions, mode) {
 
 
                 var hoverData = gd._hoverdata;
+                var selection = [];
                 var traceSelection;
-                var thisSelection;
+                var thisTracesSelection;
 
                 if(isHoverDataSet(hoverData)) {
                     var clickedPtInfo = extractClickedPtInfo(hoverData, searchTraces);
 
-                    currentPolygon = createPtNumTester(clickedPtInfo.pointNumber);
+                    currentPolygon = createPtNumTester(clickedPtInfo.pointNumber,
+                      clickedPtInfo.searchInfo.cd[0].trace._expandedIndex);
 
                     testPoly = multipolygonTester(dragOptions.polygons.concat([currentPolygon]));
-                    traceSelection = clickedPtInfo.searchInfo._module.selectPoints(clickedPtInfo.searchInfo, testPoly);
 
-                    thisSelection = fillSelectionItem(traceSelection, clickedPtInfo.searchInfo);
-                    eventData = {points: thisSelection};
+                    for(i = 0; i < searchTraces.length; i++) {
+                        traceSelection = searchTraces[i]._module.selectPoints(searchTraces[i], testPoly);
+                        thisTracesSelection = fillSelectionItem(traceSelection, searchTraces[i]);
+
+                        if(selection.length) {
+                            for(var j = 0; j < thisTracesSelection.length; j++) {
+                                selection.push(thisTracesSelection[j]);
+                            }
+                        }
+                        else selection = thisTracesSelection;
+                    }
+
+                    eventData = {points: selection};
                     updateSelectedState(gd, searchTraces, eventData);
 
                     if(currentPolygon && dragOptions.polygons) {
@@ -429,15 +441,17 @@ function extractClickedPtInfo(hoverData, searchTraces) {
     };
 }
 
-function createPtNumTester(pointNumber) {
+// TODO What about passing a searchInfo instead of wantedExpandedTraceIndex?
+function createPtNumTester(wantedPointNumber, wantedExpandedTraceIndex) {
     return {
         xmin: 0,
         xmax: 0,
         ymin: 0,
         ymax: 0,
         pts: [],
-        contains: function(pt, omitFirstEdge, index) {
-            return index === pointNumber;
+        // TODO Consider making signature of contains more lean
+        contains: function(pt, omitFirstEdge, pointNumber, expandedTraceIndex) {
+            return expandedTraceIndex === wantedExpandedTraceIndex && pointNumber === wantedPointNumber;
         },
         isRect: false,
         degenerate: false,
