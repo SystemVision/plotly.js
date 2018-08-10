@@ -320,6 +320,46 @@ function prepSelect(e, startX, startY, dragOptions, mode) {
                 gd.emit('plotly_deselect', null);
             }
             else {
+
+
+                var selection = [];
+                for(i = 0; i < searchTraces.length; i++) {
+                    searchInfo = searchTraces[i];
+                    currentPolygon = {
+                        xmin: 0,
+                        xmax: 0,
+                        ymin: 0,
+                        ymax: 0,
+                        pts: [],
+                        contains: function(pt, omitFirstEdge, index) {
+                            return index === 1;
+                        },
+                        isRect: false,
+                        degenerate: false,
+                        subtract: false
+                    };
+                    testPoly = multipolygonTester(dragOptions.polygons.concat([currentPolygon]));
+                    var traceSelection = searchInfo._module.selectPoints(searchInfo, testPoly);
+
+                    var thisSelection = fillSelectionItem(traceSelection, searchInfo);
+
+                    if(selection.length) {
+                        for(var j = 0; j < thisSelection.length; j++) {
+                            selection.push(thisSelection[j]);
+                        }
+                    }
+                    else selection = thisSelection;
+
+                    eventData = {points: selection};
+                    updateSelectedState(gd, searchTraces, eventData);
+                }
+
+                if(currentPolygon && dragOptions.polygons) {
+                    currentPolygon.subtract = false;
+                    dragOptions.polygons.push(currentPolygon);
+                }
+
+
                 // TODO: remove in v2 - this was probably never intended to work as it does,
                 // but in case anyone depends on it we don't want to break it now.
                 gd.emit('plotly_selected', undefined);
