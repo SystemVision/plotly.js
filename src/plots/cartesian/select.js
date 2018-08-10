@@ -345,7 +345,15 @@ function prepSelect(e, startX, startY, dragOptions, mode) {
                     }
                 }
 
-
+                // TODO DRY
+                // draw selection
+                var paths = [];
+                for(i = 0; i < dragOptions.mergedPolygons.length; i++) {
+                    var ppts = dragOptions.mergedPolygons[i];
+                    paths.push(ppts.join('L') + 'L' + ppts[0]);
+                }
+                outlines
+                  .attr('d', 'M' + paths.join('M') + 'Z');
 
                 // TODO: remove in v2 - this was probably never intended to work as it does,
                 // but in case anyone depends on it we don't want to break it now.
