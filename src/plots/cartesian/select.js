@@ -327,37 +327,54 @@ function prepSelect(e, startX, startY, dragOptions, mode) {
                 var selection = [];
                 var traceSelection;
                 var thisTracesSelection;
+                var pointSelected;
                 var subtract;
 
                 if(isHoverDataSet(hoverData)) {
                     var clickedPtInfo = extractClickedPtInfo(hoverData, searchTraces);
 
-                    subtract = isPointSelected(clickedPtInfo.searchInfo.cd[0].trace,
+                    // TODO perf: call potentially costly operation (see impl comment) only when needed
+                    pointSelected = isPointSelected(clickedPtInfo.searchInfo.cd[0].trace,
                       clickedPtInfo.pointNumber);
-                    currentPolygon = createPtNumTester(clickedPtInfo.pointNumber,
-                      clickedPtInfo.searchInfo.cd[0].trace._expandedIndex, subtract);
 
-                    var concatenatedPolygons = dragOptions.polygons.concat([currentPolygon]);
-                    testPoly = multipolygonTester(concatenatedPolygons);
-
-                    for(i = 0; i < searchTraces.length; i++) {
-                        traceSelection = searchTraces[i]._module.selectPoints(searchTraces[i], testPoly);
-                        thisTracesSelection = fillSelectionItem(traceSelection, searchTraces[i]);
-
-                        if(selection.length) {
-                            for(var j = 0; j < thisTracesSelection.length; j++) {
-                                selection.push(thisTracesSelection[j]);
-                            }
+                    if(pointSelected && isOnlyOnePointSelected(searchTraces)) {
+                        // TODO DRY see doubleClick handling above
+                        outlines.remove();
+                        for(i = 0; i < searchTraces.length; i++) {
+                            searchInfo = searchTraces[i];
+                            searchInfo._module.selectPoints(searchInfo, false);
                         }
-                        else selection = thisTracesSelection;
+
+                        updateSelectedState(gd, searchTraces);
+                        gd.emit('plotly_deselect', null);
+                    } else {
+                        subtract = evt.shiftKey && pointSelected;
+                        currentPolygon = createPtNumTester(clickedPtInfo.pointNumber,
+                          clickedPtInfo.searchInfo.cd[0].trace._expandedIndex, subtract);
+
+                        var concatenatedPolygons = dragOptions.polygons.concat([currentPolygon]);
+                        testPoly = multipolygonTester(concatenatedPolygons);
+
+                        for(i = 0; i < searchTraces.length; i++) {
+                            traceSelection = searchTraces[i]._module.selectPoints(searchTraces[i], testPoly);
+                            thisTracesSelection = fillSelectionItem(traceSelection, searchTraces[i]);
+
+                            if(selection.length) {
+                                for(var j = 0; j < thisTracesSelection.length; j++) {
+                                    selection.push(thisTracesSelection[j]);
+                                }
+                            }
+                            else selection = thisTracesSelection;
+                        }
+
+                        eventData = {points: selection};
+                        updateSelectedState(gd, searchTraces, eventData);
+
+                        if(currentPolygon && dragOptions.polygons) {
+                            dragOptions.polygons.push(currentPolygon);
+                        }
                     }
 
-                    eventData = {points: selection};
-                    updateSelectedState(gd, searchTraces, eventData);
-
-                    if(currentPolygon && dragOptions.polygons) {
-                        dragOptions.polygons.push(currentPolygon);
-                    }
                 }
 
                 // TODO DRY
@@ -482,6 +499,26 @@ function isPointSelected(trace, pointNumber) {
     //    a user selecting all data points with one lasso polygon. So scattergl would require some
     //    work.
     return trace.selectedpoints ? trace.selectedpoints.indexOf(pointNumber) > -1 : false;
+}
+
+function isOnlyOnePointSelected(searchTraces) {
+    var len = 0;
+    var searchInfo;
+    var trace;
+    var i;
+
+    for(i = 0; i < searchTraces.length; i++) {
+        searchInfo = searchTraces[i];
+        trace = searchInfo.cd[0].trace;
+        if(trace.selectedpoints) {
+            if(trace.selectedpoints.length > 1) return false;
+
+            len += trace.selectedpoints.length;
+            if(len > 1) return false;
+        }
+    }
+
+    return len === 1;
 }
 
 function updateSelectedState(gd, searchTraces, eventData) {
