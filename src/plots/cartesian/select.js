@@ -322,42 +322,29 @@ function prepSelect(e, startX, startY, dragOptions, mode) {
             else {
 
 
-                var selection = [];
-                for(i = 0; i < searchTraces.length; i++) {
-                    searchInfo = searchTraces[i];
-                    currentPolygon = {
-                        xmin: 0,
-                        xmax: 0,
-                        ymin: 0,
-                        ymax: 0,
-                        pts: [],
-                        contains: function(pt, omitFirstEdge, index) {
-                            return index === 1;
-                        },
-                        isRect: false,
-                        degenerate: false,
-                        subtract: false
-                    };
+
+                var hoverData = gd._hoverdata;
+                var traceSelection;
+                var thisSelection;
+
+                if(isHoverDataSet(hoverData)) {
+                    var clickedPtInfo = extractClickedPtInfo(hoverData, searchTraces);
+
+                    currentPolygon = createPtNumTester(clickedPtInfo.pointNumber);
+
                     testPoly = multipolygonTester(dragOptions.polygons.concat([currentPolygon]));
-                    var traceSelection = searchInfo._module.selectPoints(searchInfo, testPoly);
+                    traceSelection = clickedPtInfo.searchInfo._module.selectPoints(clickedPtInfo.searchInfo, testPoly);
 
-                    var thisSelection = fillSelectionItem(traceSelection, searchInfo);
-
-                    if(selection.length) {
-                        for(var j = 0; j < thisSelection.length; j++) {
-                            selection.push(thisSelection[j]);
-                        }
-                    }
-                    else selection = thisSelection;
-
-                    eventData = {points: selection};
+                    thisSelection = fillSelectionItem(traceSelection, clickedPtInfo.searchInfo);
+                    eventData = {points: thisSelection};
                     updateSelectedState(gd, searchTraces, eventData);
+
+                    if(currentPolygon && dragOptions.polygons) {
+                        currentPolygon.subtract = false;
+                        dragOptions.polygons.push(currentPolygon);
+                    }
                 }
 
-                if(currentPolygon && dragOptions.polygons) {
-                    currentPolygon.subtract = false;
-                    dragOptions.polygons.push(currentPolygon);
-                }
 
 
                 // TODO: remove in v2 - this was probably never intended to work as it does,
@@ -386,6 +373,67 @@ function prepSelect(e, startX, startY, dragOptions, mode) {
                 [].push.apply(dragOptions.mergedPolygons, mergedPolygons);
             }
         });
+    };
+}
+
+
+function isHoverDataSet(hoverData) {
+    return hoverData &&
+      Array.isArray(hoverData) &&
+      hoverData[0].hoverOnBox !== true;
+}
+
+function extractClickedPtInfo(hoverData, searchTraces) {
+    var hoverDatum = hoverData[0];
+    var pointNumber = -1;
+    var pointNumbers = [];
+    var searchInfo;
+    var i;
+
+    for(i = 0; i < searchTraces.length; i++) {
+        searchInfo = searchTraces[i];
+        if(hoverDatum.fullData._expandedIndex === searchInfo.cd[0].trace._expandedIndex) {
+
+            // Special case for box (and violin)
+            if(hoverDatum.hoverOnBox === true) {
+                break;
+            }
+
+            // TODO hoverDatum not having a pointNumber but a binNumber seems to be an oddity of histogram only
+            // Not deleting .pointNumber in histogram/event_data.js would simplify code here and in addition
+            // would not break the hover event structure
+            // documented at https://plot.ly/javascript/hover-events/
+            if(hoverDatum.pointNumber !== undefined) {
+                pointNumber = hoverDatum.pointNumber;
+            } else if(hoverDatum.binNumber !== undefined) {
+                pointNumber = hoverDatum.binNumber;
+                pointNumbers = hoverDatum.pointNumbers;
+            }
+
+            break;
+        }
+    }
+
+    return {
+        pointNumber: pointNumber,
+        pointNumbers: pointNumbers,
+        searchInfo: searchInfo
+    };
+}
+
+function createPtNumTester(pointNumber) {
+    return {
+        xmin: 0,
+        xmax: 0,
+        ymin: 0,
+        ymax: 0,
+        pts: [],
+        contains: function(pt, omitFirstEdge, index) {
+            return index === pointNumber;
+        },
+        isRect: false,
+        degenerate: false,
+        subtract: false
     };
 }
 
