@@ -327,14 +327,18 @@ function prepSelect(e, startX, startY, dragOptions, mode) {
                 var selection = [];
                 var traceSelection;
                 var thisTracesSelection;
+                var subtract;
 
                 if(isHoverDataSet(hoverData)) {
                     var clickedPtInfo = extractClickedPtInfo(hoverData, searchTraces);
 
+                    subtract = isPointSelected(clickedPtInfo.searchInfo.cd[0].trace,
+                      clickedPtInfo.pointNumber);
                     currentPolygon = createPtNumTester(clickedPtInfo.pointNumber,
-                      clickedPtInfo.searchInfo.cd[0].trace._expandedIndex);
+                      clickedPtInfo.searchInfo.cd[0].trace._expandedIndex, subtract);
 
-                    testPoly = multipolygonTester(dragOptions.polygons.concat([currentPolygon]));
+                    var concatenatedPolygons = dragOptions.polygons.concat([currentPolygon]);
+                    testPoly = multipolygonTester(concatenatedPolygons);
 
                     for(i = 0; i < searchTraces.length; i++) {
                         traceSelection = searchTraces[i]._module.selectPoints(searchTraces[i], testPoly);
@@ -352,7 +356,6 @@ function prepSelect(e, startX, startY, dragOptions, mode) {
                     updateSelectedState(gd, searchTraces, eventData);
 
                     if(currentPolygon && dragOptions.polygons) {
-                        currentPolygon.subtract = false;
                         dragOptions.polygons.push(currentPolygon);
                     }
                 }
@@ -442,7 +445,7 @@ function extractClickedPtInfo(hoverData, searchTraces) {
 }
 
 // TODO What about passing a searchInfo instead of wantedExpandedTraceIndex?
-function createPtNumTester(wantedPointNumber, wantedExpandedTraceIndex) {
+function createPtNumTester(wantedPointNumber, wantedExpandedTraceIndex, subtract) {
     return {
         xmin: 0,
         xmax: 0,
@@ -455,8 +458,30 @@ function createPtNumTester(wantedPointNumber, wantedExpandedTraceIndex) {
         },
         isRect: false,
         degenerate: false,
-        subtract: false
+        subtract: subtract
     };
+}
+
+function isPointSelected(trace, pointNumber) {
+    // TODO improve perf
+    // Primarily we need this function to determine if a click adds or subtracts from a selection.
+    //
+    // IME best user experience would be
+    // - that Shift+Click an unselected points adds to selection
+    // - and Shift+Click a selected point subtracts from selection.
+    //
+    // Several options:
+    // 1. Avoid problem at all by binding subtract-selection-by-click operation to Shift+Alt-Click.
+    //    Slightly less intuitive. A lot of programs deselect an already selected element when you
+    //    Shift+Click it.
+    // 2. Delegate decision to the traces module through an additional
+    //    isSelected(searchInfo, pointNumber) function. Traces like scatter or bar have
+    //    a selected flag attached to each calcData element, thus access to that information
+    //    would be fast. However, scattergl only maintains selectBatch and unselectBatch arrays.
+    //    So simply searching through those arrays in scattegl would be slow. Just imagine
+    //    a user selecting all data points with one lasso polygon. So scattergl would require some
+    //    work.
+    return trace.selectedpoints ? trace.selectedpoints.indexOf(pointNumber) > -1 : false;
 }
 
 function updateSelectedState(gd, searchTraces, eventData) {
