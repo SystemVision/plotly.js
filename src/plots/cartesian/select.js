@@ -264,13 +264,8 @@ function prepSelect(e, startX, startY, dragOptions, mode) {
         }
 
         // draw selection
-        var paths = [];
-        for(i = 0; i < mergedPolygons.length; i++) {
-            var ppts = mergedPolygons[i];
-            paths.push(ppts.join('L') + 'L' + ppts[0]);
-        }
-        outlines
-            .attr('d', 'M' + paths.join('M') + 'Z');
+        drawSelection(mergedPolygons, outlines);
+
 
         throttle.throttle(
             throttleID,
@@ -377,15 +372,7 @@ function prepSelect(e, startX, startY, dragOptions, mode) {
 
                 }
 
-                // TODO DRY
-                // draw selection
-                var paths = [];
-                for(i = 0; i < dragOptions.mergedPolygons.length; i++) {
-                    var ppts = dragOptions.mergedPolygons[i];
-                    paths.push(ppts.join('L') + 'L' + ppts[0]);
-                }
-                outlines
-                  .attr('d', 'M' + paths.join('M') + 'Z');
+                drawSelection(dragOptions.mergedPolygons, outlines);
 
                 // TODO: remove in v2 - this was probably never intended to work as it does,
                 // but in case anyone depends on it we don't want to break it now.
@@ -416,6 +403,21 @@ function prepSelect(e, startX, startY, dragOptions, mode) {
     };
 }
 
+function drawSelection(polygons, outlines) {
+    var paths = [];
+    var i;
+    var d;
+
+    for(i = 0; i < polygons.length; i++) {
+        var ppts = polygons[i];
+        paths.push(ppts.join('L') + 'L' + ppts[0]);
+    }
+
+    d = polygons.length > 0 ?
+      'M' + paths.join('M') + 'Z' :
+      ''; // TODO empty d attribute works in Chrome, but is it valid / can we rely on it?
+    outlines.attr('d', d);
+}
 
 function isHoverDataSet(hoverData) {
     return hoverData &&
