@@ -473,6 +473,7 @@ function makeSubplotLayer(gd, plotinfo) {
         else {
             var backLayer = ensureSingle(plotgroup, 'g', 'layer-subplot');
             plotinfo.shapelayer = ensureSingle(backLayer, 'g', 'shapelayer');
+            plotinfo.svcursorlayer = ensureSingle(backLayer, 'g', 'svcursorlayer');
             plotinfo.imagelayer = ensureSingle(backLayer, 'g', 'imagelayer');
 
             plotinfo.gridlayer = ensureSingle(plotgroup, 'g', 'gridlayer');

@@ -110,6 +110,7 @@ module.exports = function transitionAxes(gd, newLayout, transitionOpts, makeOnCo
 
         redrawObjs(fullLayout.annotations || [], Registry.getComponentMethod('annotations', 'drawOne'));
         redrawObjs(fullLayout.shapes || [], Registry.getComponentMethod('shapes', 'drawOne'));
+        redrawObjs(fullLayout.svcursors || [], Registry.getComponentMethod('svcursors', 'drawOne'));
         redrawObjs(fullLayout.images || [], Registry.getComponentMethod('images', 'draw'), true);
     }
 
@@ -144,6 +145,7 @@ module.exports = function transitionAxes(gd, newLayout, transitionOpts, makeOnCo
 
         redrawObjs(fullLayout.annotations || [], Registry.getComponentMethod('annotations', 'drawOne'));
         redrawObjs(fullLayout.shapes || [], Registry.getComponentMethod('shapes', 'drawOne'));
+        redrawObjs(fullLayout.svcursors || [], Registry.getComponentMethod('svcursors', 'drawOne'));
         redrawObjs(fullLayout.images || [], Registry.getComponentMethod('images', 'draw'), true);
     }
 

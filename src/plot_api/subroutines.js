@@ -566,6 +566,9 @@ exports.drawData = function(gd) {
     Registry.getComponentMethod('shapes', 'draw')(gd);
     Registry.getComponentMethod('annotations', 'draw')(gd);
 
+    // show svcursors
+    Registry.getComponentMethod('svcursors', 'draw')(gd);
+
     // Mark the first render as complete
     fullLayout._replotting = false;
 
@@ -589,6 +592,7 @@ exports.doAutoRangeAndConstraints = function(gd) {
 // be set to false before these will work properly.
 exports.finalDraw = function(gd) {
     Registry.getComponentMethod('shapes', 'draw')(gd);
+    Registry.getComponentMethod('svcursors', 'draw')(gd);
     Registry.getComponentMethod('images', 'draw')(gd);
     Registry.getComponentMethod('annotations', 'draw')(gd);
     // TODO: rangesliders really belong in marginPushers but they need to be
