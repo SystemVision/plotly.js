@@ -7,7 +7,6 @@
 */
 
 'use strict';
-// test
 
 var annAttrs = require('../annotations/attributes');
 var scatterLineAttrs = require('../../traces/scatter/attributes').line;
