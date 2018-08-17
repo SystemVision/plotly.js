@@ -141,7 +141,7 @@ function getButtonGroups(gd, buttonsToRemove, buttonsToAdd) {
     // regardless of what other types are on the plot, since they'll all
     // just treat any truthy hovermode as 'closest'
     if(hasCartesian) {
-        hoverGroup = ['toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian'];
+        hoverGroup = ['toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian', 'svcursorAdd', 'svcursorDel'];
     }
 
     if((hasCartesian || hasGL2D) && !allAxesFixed) {
