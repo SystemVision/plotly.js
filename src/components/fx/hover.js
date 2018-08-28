@@ -153,6 +153,15 @@ exports.loneHover = function loneHover(hoverItem, opts) {
     return hoverLabel.node();
 };
 
+
+exports.avoidOverlaps = function avoidOverlaps(hoverData, ax, fullLayout) {
+    return hoverAvoidOverlaps(hoverData, ax, fullLayout);
+};
+
+exports.alignHoverLabels = function alignHoverLabels(hoverLabels, rotateLabels) {
+    return alignHoverText(hoverLabels, rotateLabels);
+};
+
 // The actual implementation is here:
 function _hover(gd, evt, subplot, noHoverEvent) {
     if(!subplot) subplot = 'xy';

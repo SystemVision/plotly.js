@@ -75,7 +75,7 @@ module.exports = {
         role: 'info',
         editType: 'arraydraw',
         description: [
-            'Sets the svcursor\'s x coordinate axis (for example, \'y\' or \'y2\').'
+            'Sets the svcursor\'s y coordinate axis (for example, \'y\' or \'y2\').'
         ].join(' ')
     },
 

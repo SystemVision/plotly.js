@@ -13,7 +13,7 @@ var axisIds = require('../../plots/cartesian/axis_ids');
 
 var Registry = require('../../registry');
 
-var manage = module.exports = {
+module.exports = {
     add: addSVCursor,
     delete: delSVCursor
 };
@@ -30,6 +30,11 @@ function addSVCursor(gd) {
     var axList = axisIds.list(gd, 'x', true);
 
     var rangeNow = [0, 1];
+
+    var layoutUpdate = {};
+
+    layoutUpdate.svcursors = gd._fullLayout.svcursors;
+
     var xVal = 0;
 
     for(var i = 0; i < axList.length; i++) {
@@ -41,16 +46,17 @@ function addSVCursor(gd) {
         ];
         xVal = (rangeNow[0] + rangeNow[1]) / 2.0;
 
+        if(ax.type === 'date' && ax.calendar) {
+            xVal = ax.c2d(xVal, 0, ax.calendar);
+        }
+
+        layoutUpdate.svcursors.push(
+
+            {
+                x: xVal,
+                xref: ax._id
+            });
     }
-
-    var layoutUpdate = {};
-
-    layoutUpdate.svcursors = gd._fullLayout.svcursors;
-    layoutUpdate.svcursors.push(
-
-        {
-            x: xVal,
-        });
 
     Registry.call('relayout', gd, layoutUpdate);
 }

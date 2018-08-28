@@ -41,7 +41,7 @@ function handleCursorDefaults(svcursorIn, svcursorOut, fullLayout) {
             gdMock = {_fullLayout: fullLayout};
 
         // xref, yref
-        Axes.coerceRef(svcursorIn, svcursorOut, gdMock, axLetter, '', 'paper');
+        Axes.coerceRef(svcursorIn, svcursorOut, gdMock, axLetter, '', '');
 
         // var ax, pos2r;
 
