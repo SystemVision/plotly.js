@@ -3,6 +3,8 @@
 var Lib = require('../../lib');
 var Axes = require('../../plots/cartesian/axes');
 var handleArrayContainerDefaults = require('../../plots/array_container_defaults');
+var shapeHelpers = require('../shapes/helpers');
+var isNumeric = require('fast-isnumeric');
 
 var attributes = require('./attributes');
 
@@ -34,16 +36,35 @@ function handleCursorDefaults(svcursorIn, svcursorOut, fullLayout) {
     var dfltDash = svcursorIn.cursorMode === 'frozen' ? 'dash' : 'solid';
     coerce('line.dash', dfltDash);
 
+    var gdMock;
     // positioning
     var axLetters = ['x', 'y'];
     for(var i = 0; i < 2; i++) {
-        var axLetter = axLetters[i],
-            gdMock = {_fullLayout: fullLayout};
+        var axLetter = axLetters[i];
+        gdMock = {_fullLayout: fullLayout};
 
         // xref, yref
         Axes.coerceRef(svcursorIn, svcursorOut, gdMock, axLetter, '', '');
+    }
+    var ax;
+    var axRef = svcursorOut.xref;
 
-        // var ax, pos2r;
+    gdMock = {_fullLayout: fullLayout};
+
+    ax = Axes.getFromId(gdMock, axRef);
+
+    var rangeNow = [
+        ax.r2l(ax.range[0]),
+        ax.r2l(ax.range[1]),
+    ];
+
+    // Set default as amiddle of the range
+    var xDflt = (rangeNow[0] + rangeNow[1]) / 2.0;
+
+    // And specails default value for dates
+    if(ax.type === 'date' && ax.calendar) {
+        xDflt = ax.c2d(xDflt, 0, ax.calendar);
+    }
 
         // if(axRef !== 'paper') {
         //     ax = Axes.getFromId(gdMock, axRef);
@@ -75,9 +96,22 @@ function handleCursorDefaults(svcursorIn, svcursorOut, fullLayout) {
             // svcursorIn[attr0] = in0;
             // svcursorIn[attr1] = in1;
 
-    }
+    coerce('x', xDflt);
 
-    coerce('x');
+    // x value still can be incorrect
+    // For example, if we use "aaa" as x value for "date" x axis
+
+    var xx = svcursorOut.x;
+
+    if(ax.type === 'date') {
+        if(!Lib.isDateTime(xx, ax.calendar)) {
+            svcursorOut.x = xDflt;
+        }
+    } else {
+        if(!isNumeric(svcursorOut.x)) {
+            svcursorOut.x = xDflt;
+        }
+    }
 
     return svcursorOut;
 }
