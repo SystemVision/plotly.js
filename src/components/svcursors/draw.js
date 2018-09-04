@@ -781,6 +781,8 @@ function createHoverText(hoverData, opts, gd, svcursorOptions, cursorGroup) {
 
 
         ltext.text(xAxisLabelText)
+            .attr('label-value', xLabelValue)
+            .attr('label-date', svcursorOptions.x)
             .call(Drawing.font,
                 commonLabelOpts.font.family || fontFamily,
                 commonLabelOpts.font.size || fontSize,
@@ -860,6 +862,7 @@ function createHoverText(hoverData, opts, gd, svcursorOptions, cursorGroup) {
                 d.fontColor || contrastColor)
             .text(text)
             .attr('data-notex', 1)
+            .attr('label-value', d.yLabelVal)
             .call(svgTextUtils.positionText, 0, 0)
             .call(svgTextUtils.convertToTspans, gd);
 

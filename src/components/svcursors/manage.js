@@ -13,6 +13,8 @@ var axisIds = require('../../plots/cartesian/axis_ids');
 
 var Registry = require('../../registry');
 
+var Lib = require('../../lib');
+
 module.exports = {
     add: addSVCursor,
     delete: delSVCursor
@@ -31,11 +33,13 @@ function addSVCursor(gd) {
 
     var rangeNow = [0, 1];
 
-    var layoutUpdate = {};
+    var newSvcursorsOut = [];// Lib.extendDeepAll({}, gd._fullLayout.svcursors);
 
-    layoutUpdate.svcursors = gd._fullLayout.svcursors;
 
-    var xVal = 0;
+    for(var j = 0; j < gd._fullLayout.svcursors.length; j++) {
+        var cur = Lib.extendDeepAll({}, gd._fullLayout.svcursors[j]);
+        newSvcursorsOut.push(cur);
+    }
 
     for(var i = 0; i < axList.length; i++) {
         var ax = axList[i];
@@ -44,34 +48,47 @@ function addSVCursor(gd) {
             ax.r2l(ax.range[0]),
             ax.r2l(ax.range[1]),
         ];
-        xVal = (rangeNow[0] + rangeNow[1]) / 2.0;
+        var xVal = (rangeNow[0] + rangeNow[1]) / 2.0;
 
         if(ax.type === 'date' && ax.calendar) {
             xVal = ax.c2d(xVal, 0, ax.calendar);
         }
 
-        layoutUpdate.svcursors.push(
+        var newSvcursorsIn = {
+            x: xVal,
+            xref: ax._id
+        };
 
-            {
-                x: xVal,
-                xref: ax._id
-            });
+        newSvcursorsOut.push(newSvcursorsIn);
     }
 
-    Registry.call('relayout', gd, layoutUpdate);
+    var update = {
+        svcursors: newSvcursorsOut
+    };
+
+    Registry.call('relayout', gd, update);
+
 }
 
 function delSVCursor(gd) {
-    var layoutUpdate = {
-        svcursors: []
-    };
-    var arr = gd._fullLayout.svcursors;
-    if(arr.length) {
-        arr.pop();
-        if(arr.length) {
-            layoutUpdate.svcursors = arr;
+    var update = [];
+
+    var newSvcursorsOut = [];
+
+
+    for(var j = 0; j < gd._fullLayout.svcursors.length; j++) {
+        var cur = Lib.extendDeepAll({}, gd._fullLayout.svcursors[j]);
+        newSvcursorsOut.push(cur);
+    }
+
+    if(newSvcursorsOut.length) {
+        newSvcursorsOut.pop();
+        if(newSvcursorsOut.length) {
+            update = {
+                svcursors: newSvcursorsOut
+            };
         }
     }
 
-    Registry.call('relayout', gd, layoutUpdate);
+    Registry.call('relayout', gd, update);
 }

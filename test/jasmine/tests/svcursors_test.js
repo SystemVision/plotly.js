@@ -13,7 +13,7 @@ var d3 = require('d3');
 var createGraphDiv = require('../assets/create_graph_div');
 var destroyGraphDiv = require('../assets/destroy_graph_div');
 var failTest = require('../assets/fail_test');
-// var drag = require('../assets/drag');
+var drag = require('../assets/drag');
 
 // var customAssertions = require('../assets/custom_assertions');
 
@@ -110,11 +110,30 @@ function compareAsNumbers(val1, val2) {
     }
 }
 
-function testCursorContent(groupInfo) {
+// function compareAsDates(val1, val2, ax) {
+
+//     var firstDate = Lib.isDateTime(val1, ax.calendar);
+
+//     var secondDate = Lib.isDateTime(val2, ax.calendar);
+
+//     if(firstDate) {
+
+//         var v1 = ax.d2c(val1, 0, ax.calendar);
+//         var v2 = ax.d2c(val2, 0, ax.calendar);
+
+//         expect(v1).toBe(v2);
+//     } else {
+//         expect(firstDate).toBe(secondDate);
+//     }
+// }
+
+function testCursorContent1(groupInfo, gd) {
     var groupId = '#' + 'cursorGroup_' + groupInfo.groupIndex;
     expect(ifSvcursorGroupExists(groupInfo.groupIndex)).toBeTruthy();
 
     var val = xAxisLabelText(groupId);
+
+
     compareAsNumbers(groupInfo.xValue, val);
 
     var lb = xTraceLabelsText(groupId);
@@ -135,22 +154,22 @@ function addDeleteCursorTest(testInfo, done) {
             expect(ifSvcursorGroupExists(groupInfo1.groupIndex)).toBeFalsy();
             expect(countSvcursorGroups()).toEqual(1);
 
-            testCursorContent(groupInfo0);
+            testCursorContent1(groupInfo0, gd);
 
 
             getAddCursorButton(gd).click();
 
             expect(countSvcursorGroups()).toEqual(2);
 
-            testCursorContent(groupInfo0);
-            testCursorContent(groupInfo1);
+            testCursorContent1(groupInfo0, gd);
+            testCursorContent1(groupInfo1, gd);
 
             getDelCursorButton(gd).click();
 
             expect(ifSvcursorGroupExists(groupInfo1.groupIndex)).toBeFalsy();
             expect(countSvcursorGroups()).toEqual(1);
 
-            testCursorContent(groupInfo0);
+            testCursorContent1(groupInfo0, gd);
 
             done();
         });
@@ -279,7 +298,7 @@ describe('Test svcursors with', function() {
             expect(countSvcursorGroups())
                 .toEqual(1);
 
-            testCursorContent(groupInfo0);
+            testCursorContent1(groupInfo0, gd);
         })
         .catch(failTest)
         .then(done);
@@ -644,7 +663,7 @@ describe('Test svcursors with', function() {
             expect(countSvcursorGroups())
                 .toEqual(1);
 
-            testCursorContent(groupInfo0[shape]);
+            testCursorContent1(groupInfo0[shape], gd);
                 // done();
 
         }).catch(failTest)
@@ -698,6 +717,155 @@ describe('Test svcursors with', function() {
         gd = createGraphDiv();
 
         testWithShape(gd, shape, done);
+    });
+
+});
+
+describe('Test svcursors move', function() {
+
+    var gd;
+
+    function makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange) {
+        gd = createGraphDiv();
+
+        // we've already tested autorange with relayout, so fix the geometry
+        // completely so we know exactly what we're dealing with
+        // plot area is 300x300, and covers data range 100x100
+        return Plotly.plot(gd,
+            [{x: xPoints, y: yPoints}],
+            {
+                xaxis: {range: xRange},
+                yaxis: {range: yRange},
+                width: 500,
+                height: 500,
+                margin: {l: 100, r: 100, t: 100, b: 100, pad: 0},
+                svcursors: svcursorOptions
+            }
+        );
+    }
+
+    function dragCursor(node, dx, dy) {
+        return drag(node, dx, dy).then(function() {
+            return Plots.previousPromises(gd);
+        });
+    }
+
+    function getCursorLine() { return gd.querySelector('.svcursor_group > path'); }
+
+    function checkDragging(findDragger, groupInfo0, groupInfo1, groupInfo2, groupInfo3, dx) {
+
+        testCursorContent1(groupInfo0, gd);
+        // move to the right a little bit
+        return dragCursor(findDragger(), 90, -30)
+        .then(function() {
+            testCursorContent1(groupInfo1, gd);
+
+            // now move to the right close to the edge
+            return dragCursor(findDragger(), 120, 0);
+        })
+        .then(function() {
+            testCursorContent1(groupInfo2, gd);
+
+             // now move to the right outside of the edge
+            return dragCursor(findDragger(), 75, 0);
+        })
+        .then(function() {
+            testCursorContent1(groupInfo3, gd);
+
+            // finally move it back to the initial position
+            return dragCursor(findDragger(), dx, 30);
+        })
+        .then(function() {
+            testCursorContent1(groupInfo0, gd);
+        });
+    }
+
+    it('simple drag with linear X axis', function(done) {
+        destroyGraphDiv();
+
+        var svcursorOptions = [
+            {
+                x: 5
+            }];
+
+        var groupInfo0 = {
+            groupIndex: 0,
+            xValue: '5',
+            flagValues: '5'
+        };
+
+        var groupInfo1 = {
+            groupIndex: 0,
+            xValue: '35',
+            flagValues: '35'
+        };
+
+        var groupInfo2 = {
+            groupIndex: 0,
+            xValue: '75',
+            flagValues: '75'
+        };
+
+        var groupInfo3 = {
+            groupIndex: 0,
+            xValue: '100',
+            flagValues: '100'
+        };
+
+        var xPoints = [0, 100];
+        var yPoints = [0, 100];
+        var xRange = [0, 100];
+        var yRange = [0, 100];
+
+        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange).then(function() {
+            return checkDragging(getCursorLine, groupInfo0, groupInfo1, groupInfo2, groupInfo3, -285);
+        }).catch(failTest)
+        .then(done);
+    });
+
+    it('simple drag with date X axis', function(done) {
+        destroyGraphDiv();
+
+        var xPoints = ['2017-10-04 00:00:00', '2017-10-04 12:00:00', '2017-10-05 00:00:00'];
+        var yPoints = [1, 4, 7];
+        var xRange = ['2017-10-04 00:00:00', '2017-10-05 00:00:00'];
+        var yRange = [1, 7];
+
+        var svcursorOptions = [
+            {
+                x: '2017-10-04 04:00:00'
+            }];
+
+        var groupInfo0 = {
+            groupIndex: 0,
+            xValue: 'Oct 4, 2017, 04:00',
+            flagValues: '2'
+        };
+
+        var groupInfo1 = {
+            groupIndex: 0,
+            xValue: 'Oct 4, 2017, 11:12',
+            flagValues: '3.8'
+        };
+
+        var groupInfo2 = {
+            groupIndex: 0,
+            xValue: 'Oct 4, 2017, 20:48',
+            flagValues: '6.2'
+        };
+
+        var groupInfo3 = {
+            groupIndex: 0,
+            xValue: 'Oct 5, 2017',
+            flagValues: '7'
+        };
+
+        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange)
+        .then(function() {
+            return checkDragging(getCursorLine, groupInfo0, groupInfo1, groupInfo2, groupInfo3, -250);
+        })
+        .catch(failTest)
+        .then(done);
     });
 
 });
