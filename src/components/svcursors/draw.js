@@ -53,7 +53,8 @@ var CURSOR_FLAG_CLASS = 'svcursor_flag';
 
 module.exports = {
     draw: draw,
-    drawOne: drawOne
+    drawOne: drawOne,
+    updateFlags: updateFlags
 };
 
 function draw(gd) {
@@ -101,6 +102,15 @@ function isInRange(x, cursorXAxis) {
     }
 
     return true;
+}
+
+function updateFlags(gd, index, yValues) {
+
+    var svcursorOptions = gd._fullLayout.svcursors[index];
+
+    var selector = '#cursorGroup_' + index;
+    var cursorGroup = d3.select(selector);
+    createLabels(gd, svcursorOptions, cursorGroup, yValues);
 }
 
 function getXValueAsNumber(xVal, cursorXAxis) {
@@ -176,24 +186,28 @@ function drawOne(gd, index) {
         return;
     }
 
-    if(svcursorOptions.layer !== 'below') {
-        drawSvcursor(gd._fullLayout._svcursorUpperLayer, index);
-    }
-    else {
-        var plotinfo = gd._fullLayout._plots[svcursorOptions.xref + svcursorOptions.yref];
-        if(plotinfo) {
-            var mainPlot = plotinfo.mainplotinfo || plotinfo;
-            drawSvcursor(mainPlot.svcursorlayer, index);
-        }
-        else {
-            // Fall back to _svcursorUpperLayer in case the requested subplot doesn't exist.
-            // This can happen if you reference the svcursor to an x / y axis combination
-            // that doesn't have any data on it
-            drawSvcursor(gd._fullLayout._svcursorUpperLayer, index);
-        }
-    }
+    // if(svcursorOptions.layer !== 'below') {
+    //     drawSvcursor(gd._fullLayout._svcursorUpperLayer, index);
+    // }
+    // else {
+    //     var plotinfo = gd._fullLayout._plots[svcursorOptions.xref + svcursorOptions.yref];
+    //     if(plotinfo) {
+    //         var mainPlot = plotinfo.mainplotinfo || plotinfo;
+    //         drawSvcursor(mainPlot.svcursorlayer, index);
+    //     }
+    //     else {
+    //         // Fall back to _svcursorUpperLayer in case the requested subplot doesn't exist.
+    //         // This can happen if you reference the svcursor to an x / y axis combination
+    //         // that doesn't have any data on it
+    //         drawSvcursor(gd._fullLayout._svcursorUpperLayer, index);
+    //     }
+    // }
 
-    function drawSvcursor(svcursorLayer, index) {
+    drawSvcursor(index);
+
+    function drawSvcursor(index) {
+
+        var svcursorLayer = gd._fullLayout._svcursorUpperLayer;
 
         var cursorXAxis = Axes.getFromId(gd, svcursorOptions.xref);
         var axisType = cursorXAxis.type;
@@ -229,317 +243,11 @@ function drawOne(gd, index) {
         //     }
         //   });
 
-        createLabels(gd, svcursorOptions, cursorGroup, svcursorLayer);
+        createLabels(gd, svcursorOptions, cursorGroup, null);
 
         // SystemVision: Always support dragging
         setupDragElement(gd, path, svcursorOptions, index, cursorGroup);
     }
-}
-
-
-function initHoverData(gd, subplot, svcursorOptions) {
-    if(!subplot) subplot = 'xy';
-
-    // if the user passed in an array of subplots,
-    // use those instead of finding overlayed plots
-    var subplots = Array.isArray(subplot) ? subplot : [subplot];
-
-    var fullLayout = gd._fullLayout;
-    var plots = fullLayout._plots || [];
-    var plotinfo = plots[subplot];
-    // var hasCartesian = fullLayout._has('cartesian');
-
-    // list of all overlaid subplots to look at
-    if(plotinfo) {
-        var overlayedSubplots = plotinfo.overlays.map(function(pi) {
-            return pi.id;
-        });
-
-        subplots = subplots.concat(overlayedSubplots);
-    }
-
-    var len = subplots.length;
-    var cursorXAxis = Axes.getFromId(gd, svcursorOptions.xref);
-
-    var yaArray = new Array(len);
-
-    for(var i = 0; i < len; i++) {
-        var spId = subplots[i];
-
-        // 'cartesian' case
-        var plotObj = plots[spId];
-        if(plotObj) {
-
-            // TODO make sure that fullLayout_plots axis refs
-            // get updated properly so that we don't have
-            // to use Axes.getFromId in general.
-
-            yaArray[i] = Axes.getFromId(gd, plotObj.yaxis._id);
-            continue;
-        }
-
-        // other subplot types
-        var _subplot = fullLayout[spId]._subplot;
-        yaArray[i] = _subplot.yaxis;
-    }
-
-    // /////////////////////
-
-    // var hoverdistance = fullLayout.hoverdistance === -1 ? Infinity : fullLayout.hoverdistance;
-    // var spikedistance = fullLayout.spikedistance === -1 ? Infinity : fullLayout.spikedistance;
-    // the pixel distance to beat as a matching point
-    // in 'x' or 'y' mode this resets for each trace
-    var distance = 10000;
-
-    var hoverData = [],
-
-        curvenum,
-        cd,
-        trace,
-        subplotId,
-        subploti,
-        pointData;
-
-
-    for(curvenum = 0; curvenum < gd.calcdata.length; curvenum++) {
-        cd = gd.calcdata[curvenum];
-        trace = cd[0].trace;
-        if(subplots.indexOf(FxHelpers.getSubplot(trace)) === -1) {
-            continue;
-        }
-
-    // find the closest point in each trace
-    // this is minimum dx and/or dy, depending on mode
-    // and the pixel position for the label (labelXpx, labelYpx)
-
-
-        // filter out broken data
-        if(!cd || !cd[0] || !trace) continue;
-
-
-        subplotId = FxHelpers.getSubplot(trace);
-        subploti = subplots.indexOf(subplotId);
-
-        // container for new point, also used to pass info into module.hoverPoints
-        pointData = {
-            // trace properties
-            cd: cd,
-            trace: trace,
-            xa: cursorXAxis,
-            ya: yaArray[subploti],
-
-            // point properties - override all of these
-            index: false, // point index in trace - only used by plotly.js hoverdata consumers
-            distance: distance,
-
-            // where and how to display the hover label
-            color: Color.defaultLine, // trace color
-            name: trace.name,
-            x0: undefined,
-            x1: undefined,
-            y0: undefined,
-            y1: undefined,
-            xLabelVal: undefined,
-            yLabelVal: undefined,
-            text: undefined
-        };
-
-        // SystemVision: If we use "date" in X axis, let be sure that we use x (as a time) in ms
-        // So transfrom it from "2013-11-10 22:23:00" into 1384122180000, for example
-
-        var result = getXValueAsNumber(svcursorOptions.x, cursorXAxis);
-        var xValue = result.xVal;
-
-        // SystemVision: We do not use yval to find hoverPoints, so it can be set to arbitrary value
-        var yValue = 0;
-
-        // Now if there is range to look in, find the points to hover.
-
-        var newPoints = hoverPoints(pointData, xValue, yValue, svcursorOptions.cursorMode);
-        if(newPoints) {
-            var newPoint;
-            for(var newPointNum = 0; newPointNum < newPoints.length; newPointNum++) {
-                newPoint = newPoints[newPointNum];
-                if(isNumeric(newPoint.x0) && isNumeric(newPoint.y0)) {
-                    hoverData.push(cleanPoint(newPoint, 'x'));
-                }
-            }
-        }
-
-        // Lib.log('Unrecognized trace type in hover:', trace);
-
-    }
-
-    function hoverPoints(pointData, xval, yval) {
-        var cd = pointData.cd;
-        var trace = cd[0].trace;
-        var traceXAxis = pointData.xa;
-        var traceYAxis = pointData.ya;
-
-        var xpx = traceXAxis.c2p(xval);
-        var ypx = traceYAxis.c2p(yval);
-        var minRad = (trace.mode.indexOf('markers') !== -1) ? 3 : 0.5;
-
-        var dx = function(di) {
-            // dx and dy are used in compare modes - here we want to always
-            // prioritize the closest data point, at least as long as markers are
-            // the same size or nonexistent, but still try to prioritize small markers too.
-            var rad = Math.max(3, di.mrc || 0);
-            var kink = 1 - 1 / rad;
-            var dxRaw = Math.abs(traceXAxis.c2p(di.x) - xpx);
-            var d = (dxRaw < rad) ? (kink * dxRaw / rad) : (dxRaw - rad + kink);
-            return d;
-        };
-        var dy = function(di) {
-            var rad = Math.max(3, di.mrc || 0);
-            var kink = 1 - 1 / rad;
-            var dyRaw = Math.abs(traceYAxis.c2p(di.y) - ypx);
-            return (dyRaw < rad) ? (kink * dyRaw / rad) : (dyRaw - rad + kink);
-        };
-        var dxy = function(di) {
-            // scatter points: d.mrc is the calculated marker radius
-            // adjust the distance so if you're inside the marker it
-            // always will show up regardless of point size, but
-            // prioritize smaller points
-            var rad = Math.max(minRad, di.mrc || 0);
-            var dx = traceXAxis.c2p(di.x) - xpx;
-            var dy = traceYAxis.c2p(di.y) - ypx;
-            return Math.max(Math.sqrt(dx * dx + dy * dy) - rad, 1 - minRad / rad);
-        };
-        var distfn = Fx.getDistanceFunction('x', dx, dy, dxy);
-
-        var x0, y0, x1, y1, xx, yy;
-
-        function getIntersectionPoint() {
-            var lineShape = trace.line.shape;
-
-            if(xx === x0) {
-                return y0;
-            }
-
-            if(xx === x1) {
-                return y1;
-            }
-
-            if(lineShape === 'hv') {
-                if(xx < x1) {
-                    return y0;
-                } else {
-                    return y1;
-                }
-            }
-
-            if(lineShape === 'vh') {
-                if(xx > x0) {
-                    return y1;
-                } else {
-                    return y0;
-                }
-            }
-
-            if(lineShape === 'hvh') {
-                if(xx < (x0 + x1) / 2) {
-                    return y0;
-                } else {
-                    return y1;
-                }
-            }
-
-            if(lineShape === 'vhv') {
-                if(xx > x0) {
-                    return (y0 + y1) / 2;
-                } else {
-                    return y0;
-                }
-            }
-
-            if(lineShape === 'linear') {
-                return (xx - x0) * (y1 - y0) / (x1 - x0) + y0;
-            }
-
-            return null;
-        }
-
-        Fx.getClosest(cd, distfn, pointData);
-
-        // skip the rest (for this trace) if we didn't find a close point
-        if(pointData.index !== false) {
-
-            // the closest data point
-            var di = cd[pointData.index];
-
-            var intersect = false;
-            var exact = false;
-
-            x0 = di.x;
-            y0 = di.y;
-            x1 = di.x;
-            y1 = di.y;
-            xx = traceXAxis.p2c(xpx);
-            if(!isInRange(xx, traceXAxis)) {
-                yy = null;
-            } else {
-                yy = di.y;
-
-                var leftPoint = pointData.index;
-                var rightPoint = pointData.index;
-                if(pointData.distance < 0.0001) {
-                    intersect = true;
-                    exact = true;
-                } else if(di.x > xx && pointData.index > 0) {
-                    leftPoint = pointData.index - 1;
-                    rightPoint = pointData.index;
-                    intersect = true;
-                } else if(di.x < xx && pointData.index < cd.length - 1) {
-                    rightPoint = pointData.index + 1;
-                    leftPoint = pointData.index;
-                    intersect = true;
-                }
-
-                var dLeft = cd[leftPoint];
-                x0 = dLeft.x;
-                y0 = dLeft.y;
-                var dRight = cd[rightPoint];
-                x1 = dRight.x;
-                y1 = dRight.y;
-
-
-                if(intersect) {
-                    if(exact) {
-                        yy = y0;
-                    } else {
-                        yy = getIntersectionPoint();
-                    }
-
-                } else {
-                    yy = null;
-                }
-
-                var xc = xpx;
-                var yc = traceYAxis.c2p(yy);
-
-                Lib.extendFlat(pointData, {
-                    color: getTraceColor(trace, di),
-
-                    x0: xc,
-                    x1: xc,
-                    xLabelVal: xx,
-
-                    y0: yc,
-                    y1: yc,
-                    yLabelVal: yy,
-
-                    spikeDistance: dxy(di)
-                });
-
-            }
-
-            Registry.getComponentMethod('errorbars', 'hoverInfo')(di, trace, pointData);
-
-            return [pointData];
-        }
-    }
-    return hoverData;
 }
 
 function cleanPoint(d) {
@@ -633,10 +341,8 @@ function setupDragElement(gd, svcursorPath, svcursorOptions, index, cursorGroup)
     function startDrag(evt) {
         svcursorOptions.x = fixXValue(svcursorOptions.x, xa);
 
-        var astr = 'svcursors[' + index + ']';
-
         x0 = convFunc.x2p(svcursorOptions.x);
-        astrX0 = astr + '.x';
+        astrX0 = 'svcursors[' + index + ']' + '.x';
 
         update = {};
 
@@ -650,7 +356,25 @@ function setupDragElement(gd, svcursorPath, svcursorOptions, index, cursorGroup)
             return;
         }
         setCursor(svcursorPath);
-        Registry.call('relayout', gd, update);
+
+        Registry.call('relayout', gd, update).then(function() {
+            var eventData = {
+                index: index,
+                svcursor: svcursorOptions._input,
+                fullSVCursor: svcursorOptions,
+                event: d3.event
+            };
+
+            // if(subplotId) {
+            //     eventData.subplotId = subplotId;
+            // }
+
+            gd.emit('plotly_stopcursordrag', eventData);
+            // var fixYValues = [];
+            // fixYValues.singleTrace = '234';
+            // fixYValues.secondTrace = 'QQQQQQQQQQQQQQQQQQQQQQQQQQQQQ';
+            // updateFlags(gd, index, fixYValues);
+        });
     }
 
     function movesvcursor(dx) {
@@ -670,9 +394,7 @@ function setupDragElement(gd, svcursorPath, svcursorOptions, index, cursorGroup)
 
         svcursorPath.attr('d', getPathString(gd, svcursorOptions));
 
-        var svcursorLayer = gd._fullLayout._svcursorUpperLayer;
-        createLabels(gd, svcursorOptions, cursorGroup, svcursorLayer);
-
+        createLabels(gd, svcursorOptions, cursorGroup, null);
     }
 }
 
@@ -730,7 +452,7 @@ function getPathString(gd, svcursorOptions) {
 
 }
 
-function createHoverText(hoverData, opts, gd, svcursorOptions, cursorGroup) {
+function createLabelText(hoverData, opts, gd, svcursorOptions, cursorGroup) {
     var bgColor = opts.bgColor;
     var container = cursorGroup;// opts.container;
     var outerContainer = opts.outerContainer;
@@ -909,19 +631,306 @@ function createHoverText(hoverData, opts, gd, svcursorOptions, cursorGroup) {
     return hoverLabels;
 }
 
-function createLabels(gd, svcursorOptions, cursorGroup, svcursorLayer) {
+function createLabels(gd, svcursorOptions, cursorGroup, fixYValues) {
 
     var fullLayout = gd._fullLayout;
     var labelOpts = {
         hovermode: 'x',
         bgColor: Color.background || 'black',
-        container: svcursorLayer,
+        container: gd._fullLayout._svcursorUpperLayer,
         outerContainer: fullLayout._paperdiv,
         commonLabelOpts: fullLayout.hoverlabel,
         hoverdistance: fullLayout.hoverdistance
     };
 
     var subplots = gd._fullLayout._subplots.cartesian;
-    var hoverData = initHoverData(gd, subplots, svcursorOptions);
-    createHoverText(hoverData, labelOpts, gd, svcursorOptions, cursorGroup);
+    var hoverData = initCursorData(gd, subplots, svcursorOptions, fixYValues);
+    createLabelText(hoverData, labelOpts, gd, svcursorOptions, cursorGroup);
+}
+
+
+function initCursorData(gd, subplot, svcursorOptions, fixYValues) {
+    if(!subplot) subplot = 'xy';
+
+    // if the user passed in an array of subplots,
+    // use those instead of finding overlayed plots
+    var subplots = Array.isArray(subplot) ? subplot : [subplot];
+
+    var fullLayout = gd._fullLayout;
+    var plots = fullLayout._plots || [];
+    var plotinfo = plots[subplot];
+    // var hasCartesian = fullLayout._has('cartesian');
+
+    // list of all overlaid subplots to look at
+    if(plotinfo) {
+        var overlayedSubplots = plotinfo.overlays.map(function(pi) {
+            return pi.id;
+        });
+
+        subplots = subplots.concat(overlayedSubplots);
+    }
+
+    var len = subplots.length;
+    var cursorXAxis = Axes.getFromId(gd, svcursorOptions.xref);
+
+    var yaArray = new Array(len);
+
+    for(var i = 0; i < len; i++) {
+        var spId = subplots[i];
+
+        // 'cartesian' case
+        var plotObj = plots[spId];
+        if(plotObj) {
+
+            // TODO make sure that fullLayout_plots axis refs
+            // get updated properly so that we don't have
+            // to use Axes.getFromId in general.
+
+            yaArray[i] = Axes.getFromId(gd, plotObj.yaxis._id);
+            continue;
+        }
+
+        // other subplot types
+        var _subplot = fullLayout[spId]._subplot;
+        yaArray[i] = _subplot.yaxis;
+    }
+
+    // /////////////////////
+
+    // var hoverdistance = fullLayout.hoverdistance === -1 ? Infinity : fullLayout.hoverdistance;
+    // var spikedistance = fullLayout.spikedistance === -1 ? Infinity : fullLayout.spikedistance;
+    // the pixel distance to beat as a matching point
+    // in 'x' or 'y' mode this resets for each trace
+    var distance = 10000;
+
+    var hoverData = [],
+
+        curvenum,
+        cd,
+        trace,
+        subplotId,
+        subploti,
+        pointData;
+
+
+    for(curvenum = 0; curvenum < gd.calcdata.length; curvenum++) {
+        cd = gd.calcdata[curvenum];
+        trace = cd[0].trace;
+        if(subplots.indexOf(FxHelpers.getSubplot(trace)) === -1) {
+            continue;
+        }
+
+        // filter out broken data
+        if(!cd || !cd[0] || !trace) continue;
+
+
+        subplotId = FxHelpers.getSubplot(trace);
+        subploti = subplots.indexOf(subplotId);
+
+        // container for new point, also used to pass info into module.hoverPoints
+        pointData = {
+            // trace properties
+            cd: cd,
+            trace: trace,
+            xa: cursorXAxis,
+            ya: yaArray[subploti],
+
+            // point properties - override all of these
+            index: false, // point index in trace - only used by plotly.js hoverdata consumers
+            distance: distance,
+
+            // where and how to display the hover label
+            color: Color.defaultLine, // trace color
+            name: trace.name,
+            x0: undefined,
+            x1: undefined,
+            y0: undefined,
+            y1: undefined,
+            xLabelVal: undefined,
+            yLabelVal: undefined,
+            text: undefined
+        };
+
+        // SystemVision: If we use "date" in X axis, let be sure that we use x (as a time) in ms
+        // So transfrom it from "2013-11-10 22:23:00" into 1384122180000, for example
+
+        var result = getXValueAsNumber(svcursorOptions.x, cursorXAxis);
+        var xValue = result.xVal;
+
+        // SystemVision: We do not use yval to find hoverPoints, so it can be set to arbitrary value
+        var yValue = 0;
+
+        // Now if there is range to look in, find the points to hover.
+        var fixYValue = null;
+        if(fixYValues !== null && fixYValues !== undefined) {
+            fixYValue = fixYValues[trace.name];
+        }
+
+        var newPoints = hoverPoints(pointData, xValue, yValue, fixYValue);
+        if(newPoints) {
+            var newPoint;
+            for(var newPointNum = 0; newPointNum < newPoints.length; newPointNum++) {
+                newPoint = newPoints[newPointNum];
+                if(isNumeric(newPoint.x0) && isNumeric(newPoint.y0)) {
+                    hoverData.push(cleanPoint(newPoint, 'x'));
+                }
+            }
+        }
+    }
+
+    function hoverPoints(pointData, xval, yval, fixYValue) {
+        var cd = pointData.cd;
+        var trace = cd[0].trace;
+        var traceXAxis = pointData.xa;
+        var traceYAxis = pointData.ya;
+
+        var xpx = traceXAxis.c2p(xval);
+        // var ypx = traceYAxis.c2p(yval);
+        // var minRad = (trace.mode.indexOf('markers') !== -1) ? 3 : 0.5;
+
+        // find closest point by x
+        var distfn = function(di) {
+            // dx and dy are used in compare modes - here we want to always
+            // prioritize the closest data point, at least as long as markers are
+            // the same size or nonexistent, but still try to prioritize small markers too.
+            var rad = Math.max(3, di.mrc || 0);
+            var kink = 1 - 1 / rad;
+            var dxRaw = Math.abs(traceXAxis.c2p(di.x) - xpx);
+            var d = (dxRaw < rad) ? (kink * dxRaw / rad) : (dxRaw - rad + kink);
+            return d;
+        };
+
+        var x0, y0, x1, y1, xx, yy;
+
+        function getIntersectionPoint() {
+            var lineShape = trace.line.shape;
+
+            if(xx === x0) {
+                return y0;
+            }
+
+            if(xx === x1) {
+                return y1;
+            }
+
+            if(lineShape === 'hv') {
+                if(xx < x1) {
+                    return y0;
+                } else {
+                    return y1;
+                }
+            }
+
+            if(lineShape === 'vh') {
+                if(xx > x0) {
+                    return y1;
+                } else {
+                    return y0;
+                }
+            }
+
+            if(lineShape === 'hvh') {
+                if(xx < (x0 + x1) / 2) {
+                    return y0;
+                } else {
+                    return y1;
+                }
+            }
+
+            if(lineShape === 'vhv') {
+                if(xx > x0) {
+                    return (y0 + y1) / 2;
+                } else {
+                    return y0;
+                }
+            }
+
+            if(lineShape === 'linear') {
+                return (xx - x0) * (y1 - y0) / (x1 - x0) + y0;
+            }
+
+            return null;
+        }
+
+        Fx.getClosest(cd, distfn, pointData);
+
+        if(pointData.index !== false) { // skip the rest (for this trace) if we didn't find a close point
+
+            // the closest data point
+            var di = cd[pointData.index];
+
+            var intersect = false;
+            var exact = false;
+
+            x0 = di.x;
+            y0 = di.y;
+            x1 = di.x;
+            y1 = di.y;
+            xx = traceXAxis.p2c(xpx);
+            if(!isInRange(xx, traceXAxis)) {
+                yy = null;
+            } else {
+                yy = di.y;
+
+                var leftPoint = pointData.index;
+                var rightPoint = pointData.index;
+                if(pointData.distance < 0.0001) {
+                    intersect = true;
+                    exact = true;
+                } else if(di.x > xx && pointData.index > 0) {
+                    leftPoint = pointData.index - 1;
+                    rightPoint = pointData.index;
+                    intersect = true;
+                } else if(di.x < xx && pointData.index < cd.length - 1) {
+                    rightPoint = pointData.index + 1;
+                    leftPoint = pointData.index;
+                    intersect = true;
+                }
+
+                var dLeft = cd[leftPoint];
+                x0 = dLeft.x;
+                y0 = dLeft.y;
+                var dRight = cd[rightPoint];
+                x1 = dRight.x;
+                y1 = dRight.y;
+
+
+                if(intersect) {
+                    if(exact) {
+                        yy = y0;
+                    } else {
+                        yy = getIntersectionPoint();
+                    }
+
+                } else {
+                    yy = null;
+                }
+
+                var xc = xpx;
+                var yc = traceYAxis.c2p(yy);
+
+                Lib.extendFlat(pointData, {
+                    color: getTraceColor(trace, di),
+
+                    x0: xc,
+                    x1: xc,
+                    xLabelVal: xx,
+
+                    y0: yc,
+                    y1: yc,
+                    yLabelVal: yy
+                });
+
+                if(fixYValue !== null && fixYValue !== undefined) {
+                    Lib.extendFlat(pointData, {
+                        yLabel: fixYValue
+                    });
+                }
+
+            }
+
+            return [pointData];
+        }
+    }
+    return hoverData;
 }
