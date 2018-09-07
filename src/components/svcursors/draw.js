@@ -42,6 +42,8 @@ var CURSOR_GROUP_CLASS = 'svcursor_group';
 var CURSOR_AXIS_LABEL_CLASS = 'svcursor_axis_label';
 var CURSOR_FLAG_CLASS = 'svcursor_flag';
 
+var supportedAxisTypes = ['linear', 'date', 'log'];
+
 // svcursors are stored in gd.layout.svcursors, an array of objects
 // index can point to one item in this array,
 //  or non-numeric to simply add a new one
@@ -73,35 +75,9 @@ function draw(gd) {
 }
 
 function isInRange(x, cursorXAxis) {
-    var xMin;
-    var xMax;
-    var xval = x;
-
-    if(cursorXAxis._rl) {
-        xMin = cursorXAxis._rl[0];
-        xMax = cursorXAxis._rl[1];
-    } else {
-        xMin = cursorXAxis.range[0];
-        xMax = cursorXAxis.range[1];
-    }
-
-    if(cursorXAxis.type === 'linear') {
-        xval = x;
-
-    } else if(cursorXAxis.type === 'date') {
-        var result = getXValueAsNumber(x, cursorXAxis);
-        xval = result.xVal;
-    }
-
-    if(xval < xMin) {
-        return false;
-    }
-
-    if(xval > xMax) {
-        return false;
-    }
-
-    return true;
+    var dd = {};
+    dd.x = x;
+    return cursorXAxis.isPtWithinRange(dd, cursorXAxis.calendar);
 }
 
 function updateFlags(gd, index, yValues) {
@@ -143,6 +119,13 @@ function fixXValue(x, cursorXAxis) {
 
     xval = result.xVal;
     convert = result.convert;
+
+    if(isInRange(xval, cursorXAxis)) {
+        if(convert) {
+            xval = cursorXAxis.c2d(xval);
+        }
+        return xval;
+    }
 
     if(cursorXAxis._rl) {
         xMin = cursorXAxis._rl[0];
@@ -205,13 +188,25 @@ function drawOne(gd, index) {
 
     drawSvcursor(index);
 
+    function isAxisSupported(axisType) {
+
+        for(var i = 0; i < supportedAxisTypes.length; i++) {
+            if(supportedAxisTypes[i] === axisType) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     function drawSvcursor(index) {
 
         var svcursorLayer = gd._fullLayout._svcursorUpperLayer;
 
         var cursorXAxis = Axes.getFromId(gd, svcursorOptions.xref);
         var axisType = cursorXAxis.type;
-        if(axisType !== 'date' && axisType !== 'linear') {
+
+
+        if(!isAxisSupported(axisType)) {
             loggersModule.warn('Cursors are not supported for such type of X data');
             return;
         }

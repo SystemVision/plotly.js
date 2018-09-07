@@ -960,4 +960,45 @@ describe('Test svcursors move', function() {
         .then(done);
     });
 
+    it('with log X axis', function(done) {
+        destroyGraphDiv();
+
+        var xPoints = [0, 2500, 5000, 7500, 10000];
+        var yPoints = [];
+        yPoints[0] = 0;
+
+        for(var i = 1; i < xPoints.length; i++) {
+            yPoints.push(Math.log10(xPoints[i]));
+        }
+
+        var xRange = [0, 10000];
+        var yRange = [0, 4];
+
+        var svcursorOptions = [
+            {
+                x: 0
+            }];
+
+        var logInfos = Lib.extendFlat({}, defaultInfos);
+
+        logInfos[0].xValue = '0';
+        logInfos[25].xValue = '2500';
+        logInfos[50].xValue = '5000';
+        logInfos[75].xValue = '7500';
+        logInfos[100].xValue = '10k';
+
+        logInfos[0].flagValues = '0';
+        logInfos[25].flagValues = Math.log10(2500);
+        logInfos[50].flagValues = Math.log10(5000);
+        logInfos[75].flagValues = Math.log10(7500);
+        logInfos[100].flagValues = '4';
+
+        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'linear')
+        .then(function() {
+            return checkDragging(getCursorLine, logInfos);
+        })
+        .catch(failTest)
+        .then(done);
+    });
+
 });
