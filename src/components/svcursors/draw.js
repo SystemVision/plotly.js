@@ -241,7 +241,9 @@ function drawOne(gd, index) {
         createLabels(gd, svcursorOptions, cursorGroup, null);
 
         // SystemVision: Always support dragging
-        setupDragElement(gd, path, svcursorOptions, index, cursorGroup);
+        if(svcursorOptions.cursorMode !== 'frozen') {
+            setupDragElement(gd, path, svcursorOptions, index, cursorGroup);
+        }
     }
 }
 

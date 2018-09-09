@@ -14,6 +14,8 @@ var createGraphDiv = require('../assets/create_graph_div');
 var destroyGraphDiv = require('../assets/destroy_graph_div');
 var failTest = require('../assets/fail_test');
 var drag = require('../assets/drag');
+var getNodeCoords = require('../assets/get_node_coords');
+// var getClientPosition = require('../assets/get_client_position');
 
 // var customAssertions = require('../assets/custom_assertions');
 
@@ -84,14 +86,14 @@ function xAxisLabelText(groupId) {
     return null;
 }
 
-function xTraceLabelsText(groupId) {
+function yTraceLabelsText(groupId) {
     var content = [];
     d3.selectAll(groupId + '> .svcursor_flag').selectAll('text.nums').forEach(function(s) {
 
         var value = s[0].textContent;
         content.push(value);
     });
-    return content.join(',');
+    return content;
 }
 
 function getAddCursorButton(gd) {
@@ -102,12 +104,29 @@ function getDelCursorButton(gd) {
     return selectButton(gd._fullLayout._modeBar, 'svcursorDel');
 }
 
-function compareAsNumbers(val1, val2, mess) {
+function compareValues(val1, val2, mess) {
     if(isNumeric(val1)) {
         expect(val1).toBeWithin(val2, 0.001, mess);
     } else {
         expect(val1).toBe(val2, mess);
     }
+}
+
+function compareAsArray(valStr, arr, mess) {
+
+    var vv = valStr.split(',');
+
+    for(var i = 0; i < vv.length; i++) {
+        var val1 = vv[i];
+        var val2 = arr[i];
+
+        if(isNumeric(val1)) {
+            expect(val1).toBeWithin(val2, 0.001, mess);
+        } else {
+            expect(val1).toBe(val2, mess);
+        }
+    }
+
 }
 
 // function compareAsDates(val1, val2, ax) {
@@ -134,10 +153,12 @@ function testCursorContent(groupInfo) {
     var val = xAxisLabelText(groupId);
 
 
-    compareAsNumbers(groupInfo.xValue, val, 'X value');
+    compareValues(groupInfo.xValue, val, 'X value');
 
-    var lb = xTraceLabelsText(groupId);
-    compareAsNumbers(groupInfo.flagValues, lb, 'Y values');
+    var lb = yTraceLabelsText(groupId);
+    compareAsArray(groupInfo.flagValues, lb, 'Y values');
+
+    testXPosition(groupInfo);
 }
 
 function addDeleteCursorTest(testInfo, done) {
@@ -177,6 +198,44 @@ function addDeleteCursorTest(testInfo, done) {
     addCursor();
 }
 
+function testXPosition(groupInfo) {
+
+    if(groupInfo.xPos === undefined) {
+        return;
+    }
+
+    var groupIndex = groupInfo.groupIndex;
+    var xValue = groupInfo.xPos;
+
+    var xOffset = 100;
+    var scale = 3;
+    var coords;
+    var xCoor = xOffset + xValue * scale;
+
+    var groupId = '#' + 'cursorGroup_' + groupIndex;
+    d3.select(groupId).selectAll('path').each(function() {
+        var node = d3.select(this).node();
+        var parentClass = d3.select(node.parentElement).attr('class');
+        var foundPath = false;
+
+        if('svcursor_axis_label' === parentClass) {
+            coords = getNodeCoords(node, 'n');
+            expect(coords.x).toBeWithin(xCoor, 0.01, 'x axis label position');
+            foundPath = true;
+        } else if('svcursor_flag' === parentClass) {
+            coords = getNodeCoords(node, 'w');
+            expect(coords.x).toBeWithin(xCoor, 0.01, 'y axis label position');
+            foundPath = true;
+        } else if('svcursor_group' === parentClass) {
+            coords = getNodeCoords(node, 's');
+            expect(coords.x).toBeWithin(xCoor, 0.01, 'cursor line position');
+            foundPath = true;
+        }
+
+        expect(foundPath).toBeTruthy('cursor position');
+    });
+}
+
 describe('Test svcursors defaults:', function() {
     'use strict';
 
@@ -206,9 +265,9 @@ describe('Test svcursors defaults:', function() {
                 {
                     x: xx
                 };
-            var svcursors2 = Lib.extendFlat({}, svcursors1, {xref: 'x2'});
-            var svcursors3 = Lib.extendFlat({}, svcursors1, {xref: 'x3'});
-            var svcursors4 = Lib.extendFlat({}, svcursors1, {xref: 'x4'});
+            var svcursors2 = Lib.extendDeep({}, svcursors1, {xref: 'x2'});
+            var svcursors3 = Lib.extendDeep({}, svcursors1, {xref: 'x3'});
+            var svcursors4 = Lib.extendDeep({}, svcursors1, {xref: 'x4'});
 
 
             var yAxis = {type: 'linear', range: [0, 10]};
@@ -267,7 +326,7 @@ describe('Test svcursors with', function() {
                 x: 3.5
             }];
 
-        var trace1 = Lib.extendFlat({}, testTrace1);
+        var trace1 = Lib.extendDeep({}, testTrace1);
 
         var layout = {
             hovermode: false,
@@ -359,7 +418,7 @@ describe('Test add/delete svcursors for:', function() {
                 x: 3.5
             }];
 
-        var trace1 = Lib.extendFlat({}, testTrace1);
+        var trace1 = Lib.extendDeep({}, testTrace1);
 
         var layout = {
             hovermode: false,
@@ -410,7 +469,7 @@ describe('Test add/delete svcursors for:', function() {
 
 
         var opts = { line: {shape: 'vhv'}};
-        var trace1 = Lib.extendFlat({}, testTrace1, opts);
+        var trace1 = Lib.extendDeep({}, testTrace1, opts);
 
         var layout = {
             hovermode: false,
@@ -516,18 +575,18 @@ describe('Test add/delete svcursors for:', function() {
                 x: 3.5
             }];
 
-        var trace1 = Lib.extendFlat({}, testTrace1);
+        var trace1 = Lib.extendDeep({}, testTrace1);
 
         var yaxisOpt2 = {yaxis: 'y2'};
 
-        var trace2 = Lib.extendFlat({}, testTrace2, yaxisOpt2);
+        var trace2 = Lib.extendDeep({}, testTrace2, yaxisOpt2);
 
         var yaxisOpt3 = {yaxis: 'y3'};
 
-        var trace3 = Lib.extendFlat({}, testTrace2, yaxisOpt3);
+        var trace3 = Lib.extendDeep({}, testTrace2, yaxisOpt3);
 
         var yaxisOpt4 = {yaxis: 'y4'};
-        var trace4 = Lib.extendFlat({}, testTrace1, yaxisOpt4);
+        var trace4 = Lib.extendDeep({}, testTrace1, yaxisOpt4);
 
         var layout = {
             hovermode: false,
@@ -644,9 +703,9 @@ describe('Test svcursors with', function() {
         var trace1;
 
         if(shape) {
-            trace1 = Lib.extendFlat({}, testTrace1, opts);
+            trace1 = Lib.extendDeep({}, testTrace1, opts);
         } else {
-            trace1 = Lib.extendFlat({}, testTrace1);
+            trace1 = Lib.extendDeep({}, testTrace1);
         }
 
         if(!shape) {
@@ -736,31 +795,36 @@ describe('Test svcursors move', function() {
     defaultInfos[0] = {
         groupIndex: 0,
         xValue: '0',
-        flagValues: '0'
+        flagValues: '0',
+        xPos: 0
     };
 
     defaultInfos[25] = {
         groupIndex: 0,
         xValue: '25',
-        flagValues: '25'
+        flagValues: '25',
+        xPos: 25
     };
 
     defaultInfos[50] = {
         groupIndex: 0,
         xValue: '50',
-        flagValues: '50'
+        flagValues: '50',
+        xPos: 50
     };
 
     defaultInfos[75] = {
         groupIndex: 0,
         xValue: '75',
-        flagValues: '75'
+        flagValues: '75',
+        xPos: 75
     };
 
     defaultInfos[100] = {
         groupIndex: 0,
         xValue: '100',
-        flagValues: '100'
+        flagValues: '100',
+        xPos: 100
     };
 
     function makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, shape) {
@@ -944,7 +1008,7 @@ describe('Test svcursors move', function() {
                 x: '2017-10-04 00:00:00'
             }];
 
-        var dateInfos = Lib.extendFlat({}, defaultInfos);
+        var dateInfos = Lib.extendDeep({}, defaultInfos);
 
         dateInfos[0].xValue = 'Oct 4, 2017';
         dateInfos[25].xValue = 'Oct 4, 2017, 06:00';
@@ -979,7 +1043,7 @@ describe('Test svcursors move', function() {
                 x: 0
             }];
 
-        var logInfos = Lib.extendFlat({}, defaultInfos);
+        var logInfos = Lib.extendDeep({}, defaultInfos);
 
         logInfos[0].xValue = '0';
         logInfos[25].xValue = '2500';
@@ -988,9 +1052,9 @@ describe('Test svcursors move', function() {
         logInfos[100].xValue = '10k';
 
         logInfos[0].flagValues = '0';
-        logInfos[25].flagValues = Math.log10(2500);
-        logInfos[50].flagValues = Math.log10(5000);
-        logInfos[75].flagValues = Math.log10(7500);
+        logInfos[25].flagValues = '' + Math.log10(2500);
+        logInfos[50].flagValues = '' + Math.log10(5000);
+        logInfos[75].flagValues = '' + Math.log10(7500);
         logInfos[100].flagValues = '4';
 
         makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'linear')
@@ -1000,5 +1064,34 @@ describe('Test svcursors move', function() {
         .catch(failTest)
         .then(done);
     });
+
+
+    it(' test position', function(done) {
+        destroyGraphDiv();
+
+        var xPoints = [0, 100];
+        var yPoints = [0, 100];
+        var xRange = [0, 100];
+        var yRange = [0, 100];
+
+        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+
+        svcursorOptions[0].x = 20;
+
+        var info = {
+            groupIndex: 0,
+            xValue: '20',
+            flagValues: '0',
+            xPos: 20
+        };
+
+        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'linear')
+        .then(function() {
+            testXPosition(info);
+        })
+        .catch(failTest)
+        .then(done);
+    });
+
 
 });
