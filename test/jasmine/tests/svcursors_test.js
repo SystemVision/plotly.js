@@ -15,6 +15,11 @@ var destroyGraphDiv = require('../assets/destroy_graph_div');
 var failTest = require('../assets/fail_test');
 var drag = require('../assets/drag');
 var getNodeCoords = require('../assets/get_node_coords');
+
+var mouseEvent = require('../assets/mouse_event');
+
+var DBLCLICKDELAY = require('../../../src/constants/interactions').DBLCLICKDELAY;
+
 // var getClientPosition = require('../assets/get_client_position');
 
 // var customAssertions = require('../assets/custom_assertions');
@@ -165,6 +170,7 @@ function testCursorContent(groupInfo) {
 
     testXPosition(groupInfo);
 }
+exports.testCursorContent = testCursorContent;
 
 function addDeleteCursorTest(testInfo, done) {
     var gd = testInfo.gd;
@@ -218,7 +224,13 @@ function testXPosition(groupInfo) {
     var xCoor = xOffset + xValue * scale;
 
     var groupId = '#' + 'cursorGroup_' + groupIndex;
-    d3.select(groupId).selectAll('path').each(function() {
+    var group = d3.select(groupId);
+
+    if(group.empty()) {
+        expect(groupInfo.xPos).toBe('false');
+        return;
+    }
+    group.selectAll('path').each(function() {
         var node = d3.select(this).node();
         var parentClass = d3.select(node.parentElement).attr('class');
         var foundPath = false;
@@ -367,49 +379,6 @@ describe('Test svcursors with', function() {
         .catch(failTest)
         .then(done);
     });
-
-    // it('should provide the right defaults on all axis types', function() {
-    //     var fullLayout = {
-    //         xaxis: {type: 'linear', range: [0, 20], _shapeIndices: []},
-    //         yaxis: {type: 'log', range: [1, 5], _shapeIndices: []},
-    //         xaxis2: {type: 'date', range: ['2006-06-05', '2006-06-09'], _shapeIndices: []},
-    //         yaxis2: {type: 'category', range: [-0.5, 7.5], _shapeIndices: []},
-    //         _subplots: {xaxis: ['x', 'x2'], yaxis: ['y', 'y2']}
-    //     };
-
-    //     Axes.setConvert(fullLayout.xaxis);
-    //     Axes.setConvert(fullLayout.yaxis);
-    //     Axes.setConvert(fullLayout.xaxis2);
-    //     Axes.setConvert(fullLayout.yaxis2);
-
-    //     var svcursor1 = {x: 5},
-    //         shape2In = {type: 'circle', xref: 'x2', yref: 'y2'};
-
-    //     var layoutIn = {
-    //         svcursors: [svcursor1]
-    //     };
-
-    //     _supply(layoutIn, fullLayout);
-
-    //     var svcursor1Out = fullLayout.svcursors[0],
-    //         shape2Out = fullLayout.shapes[1];
-
-    //     // default positions are 1/4 and 3/4 of the full range of that axis
-    //     expect(svcursor1Out.x).toBe(5);
-    //     // expect(shape1Out.x1).toBe(15);
-
-    //     // shapes use data values for log axes (like everyone will in V2.0)
-    //     //expect(svcursor1Out.y0).toBeWithin(100, 0.001);
-    //     // expect(shape1Out.y1).toBeWithin(10000, 0.001);
-
-    //     // // date strings also interpolate
-    //     // expect(shape2Out.x0).toBe('2006-06-06');
-    //     // expect(shape2Out.x1).toBe('2006-06-08');
-
-    //     // // categories must use serial numbers to get continuous values
-    //     // expect(shape2Out.y0).toBeWithin(1.5, 0.001);
-    //     // expect(shape2Out.y1).toBeWithin(5.5, 0.001);
-    // });
 });
 
 describe('Test add/delete svcursors for:', function() {
@@ -1196,5 +1165,446 @@ describe('Test svcursors subplots', function() {
         .catch(failTest)
         .then(done);
     });
+
+});
+
+describe('Test svcursors zoom with', function() {
+    var gd;
+
+    var defaultSvcursorOptions = [
+        {
+            x: 20
+        }];
+
+    var xOffset = 100;
+    var scale = 3;
+    var zoomShift = 10;
+
+        // 0, 25, 50, 75, 100, 0
+    var defaultInfos = [];
+
+    defaultInfos[0] = {
+        groupIndex: 0,
+        xValue: '0',
+        flagValues: '0',
+        xPos: 0
+    };
+
+    defaultInfos[25] = {
+        groupIndex: 0,
+        xValue: '25',
+        flagValues: '25',
+        xPos: 25
+    };
+
+    defaultInfos[50] = {
+        groupIndex: 0,
+        xValue: '50',
+        flagValues: '50',
+        xPos: 50
+    };
+
+    defaultInfos[75] = {
+        groupIndex: 0,
+        xValue: '75',
+        flagValues: '75',
+        xPos: 75
+    };
+
+    defaultInfos[100] = {
+        groupIndex: 0,
+        xValue: '100',
+        flagValues: '100',
+        xPos: 100
+    };
+
+    function makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, shape) {
+
+        gd = createGraphDiv();
+
+        var trace = {
+            x: xPoints,
+            y: yPoints,
+            line: {shape: shape}
+        };
+
+            // we've already tested autorange with relayout, so fix the geometry
+            // completely so we know exactly what we're dealing with
+            // plot area is 300x300, and covers data range 100x100
+        return Plotly.plot(gd,
+                [trace],
+            {
+                xaxis: {range: xRange},
+                yaxis: {range: yRange},
+                width: 500,
+                height: 500,
+                margin: {l: 100, r: 100, t: 100, b: 100, pad: 0},
+                svcursors: svcursorOptions,
+                dragmode: 'zoom'
+            }
+            );
+    }
+
+    function doZoom(groupInfo, shift) {
+        var delta = 0;
+        if(shift !== undefined) {
+            delta = shift;
+        }
+        var xValue = delta + groupInfo.xValue;
+        var fromX = xOffset + (xValue - zoomShift) * scale;
+        var fromY = 200;
+        var toX = fromX + 2 * zoomShift * scale;
+        var toY = 200;
+
+        return new Promise(function(resolve) {
+            mouseEvent('mousemove', fromX, fromY);
+            mouseEvent('mousedown', fromX, fromY);
+            mouseEvent('mousemove', toX, toY);
+
+            setTimeout(function() {
+                mouseEvent('mouseup', toX, toY);
+                resolve();
+            }, DBLCLICKDELAY / 4);
+        });
+    }
+
+    function doDataZoom(groupInfo, shift) {
+        var delta = 0;
+        if(shift !== undefined) {
+            delta = shift;
+        }
+        var xValue = delta + 25;
+        var fromX = xOffset + (xValue - zoomShift) * scale;
+        var fromY = 200;
+        var toX = fromX + 2 * zoomShift * scale;
+        var toY = 200;
+
+        return new Promise(function(resolve) {
+            mouseEvent('mousemove', fromX, fromY);
+            mouseEvent('mousedown', fromX, fromY);
+            mouseEvent('mousemove', toX, toY);
+
+            setTimeout(function() {
+                mouseEvent('mouseup', toX, toY);
+                resolve();
+            }, DBLCLICKDELAY / 4);
+        });
+    }
+
+    it('with "linear" as line shape', function(done) {
+        destroyGraphDiv();
+
+        var xPoints = [0, 100];
+        var yPoints = [0, 100];
+        var xRange = [0, 100];
+        var yRange = [0, 100];
+
+        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+
+        var groupInfo = {
+            groupIndex: 0,
+            xValue: svcursorOptions[0].x,
+            flagValues: '20',
+            xPos: 50
+        };
+
+        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'linear').then(function() {
+            doZoom(groupInfo).then(function() {
+                testCursorContent(groupInfo);
+                done();
+            });
+        });
+    });
+
+    it('with "linear" as line shape and zoom without cursor', function(done) {
+        destroyGraphDiv();
+
+        var xPoints = [0, 100];
+        var yPoints = [0, 100];
+        var xRange = [0, 100];
+        var yRange = [0, 100];
+
+
+        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+
+        var groupInfo = {
+            groupIndex: 0,
+            xValue: svcursorOptions[0].x,
+            flagValues: '20',
+            xPos: -150
+        };
+
+        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'linear').then(function() {
+            doZoom(groupInfo, 40).then(function() {
+                testXPosition(groupInfo);
+                done();
+            });
+        });
+    });
+
+    it('with "vhv" as line shape', function(done) {
+
+        destroyGraphDiv();
+
+        var xPoints = [0, 50, 100];
+        var yPoints = [0, 50, 100];
+        var xRange = [0, 100];
+        var yRange = [0, 100];
+
+        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+
+        var groupInfo = {
+            groupIndex: 0,
+            xValue: svcursorOptions[0].x,
+            flagValues: '25',
+            xPos: 50
+        };
+
+
+        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'vhv').then(function() {
+            doZoom(groupInfo).then(function() {
+                testCursorContent(groupInfo);
+                done();
+            });
+        });
+    });
+
+    it('with "vhv" as line shape and without cursor', function(done) {
+
+        destroyGraphDiv();
+
+        var xPoints = [0, 50, 100];
+        var yPoints = [0, 50, 100];
+        var xRange = [0, 100];
+        var yRange = [0, 100];
+
+        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+
+        var groupInfo = {
+            groupIndex: 0,
+            xValue: svcursorOptions[0].x,
+            flagValues: '25',
+            xPos: -150
+        };
+
+
+        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'vhv').then(function() {
+            doZoom(groupInfo, 40).then(function() {
+                testXPosition(groupInfo);
+                done();
+            });
+        });
+    });
+
+    it('with "hvh" as line shape', function(done) {
+
+        destroyGraphDiv();
+
+        var xPoints = [0, 50, 100];
+        var yPoints = [0, 50, 100];
+        var xRange = [0, 100];
+        var yRange = [0, 100];
+
+        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+        var groupInfo = {
+            groupIndex: 0,
+            xValue: svcursorOptions[0].x,
+            flagValues: '0',
+            xPos: 50
+        };
+
+        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'hvh').then(function() {
+            doZoom(groupInfo).then(function() {
+                testCursorContent(groupInfo);
+                done();
+            });
+        });
+    });
+
+    it('with "hvh" as line shape and without cursor', function(done) {
+
+        destroyGraphDiv();
+
+        var xPoints = [0, 50, 100];
+        var yPoints = [0, 50, 100];
+        var xRange = [0, 100];
+        var yRange = [0, 100];
+
+        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+        var groupInfo = {
+            groupIndex: 0,
+            xValue: svcursorOptions[0].x,
+            flagValues: '0',
+            xPos: -150
+        };
+
+        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'hvh').then(function() {
+            doZoom(groupInfo, 40).then(function() {
+                testXPosition(groupInfo);
+                done();
+            });
+        });
+    });
+
+    it('with "hv" as line shape', function(done) {
+
+        destroyGraphDiv();
+
+        var xPoints = [0, 50, 100];
+        var yPoints = [0, 50, 100];
+        var xRange = [0, 100];
+        var yRange = [0, 100];
+
+        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+        var groupInfo = {
+            groupIndex: 0,
+            xValue: svcursorOptions[0].x,
+            flagValues: '0',
+            xPos: 50
+        };
+
+        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'hv').then(function() {
+            doZoom(groupInfo).then(function() {
+                testCursorContent(groupInfo);
+                done();
+            });
+        });
+    });
+
+    it('with "hv" as line shape and without cursor', function(done) {
+
+        destroyGraphDiv();
+
+        var xPoints = [0, 50, 100];
+        var yPoints = [0, 50, 100];
+        var xRange = [0, 100];
+        var yRange = [0, 100];
+
+        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+        var groupInfo = {
+            groupIndex: 0,
+            xValue: svcursorOptions[0].x,
+            flagValues: '0',
+            xPos: -150
+        };
+
+        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'hv').then(function() {
+            doZoom(groupInfo, 40).then(function() {
+                testXPosition(groupInfo);
+                done();
+            });
+        });
+    });
+
+    it('with "vh" as line shape', function(done) {
+
+        destroyGraphDiv();
+
+        var xPoints = [0, 50, 100];
+        var yPoints = [0, 50, 100];
+        var xRange = [0, 100];
+        var yRange = [0, 100];
+
+        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+        var groupInfo = {
+            groupIndex: 0,
+            xValue: svcursorOptions[0].x,
+            flagValues: '50',
+            xPos: 50
+        };
+
+        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'vh').then(function() {
+            doZoom(groupInfo).then(function() {
+                testCursorContent(groupInfo);
+                done();
+            });
+        });
+    });
+
+    it('with "vh" as line shape and without cursor', function(done) {
+
+        destroyGraphDiv();
+
+        var xPoints = [0, 50, 100];
+        var yPoints = [0, 50, 100];
+        var xRange = [0, 100];
+        var yRange = [0, 100];
+
+        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+        var groupInfo = {
+            groupIndex: 0,
+            xValue: svcursorOptions[0].x,
+            flagValues: '50',
+            xPos: -150
+        };
+
+        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'vh').then(function() {
+            doZoom(groupInfo, 40).then(function() {
+                testXPosition(groupInfo);
+                done();
+            });
+        });
+    });
+
+    it('with "date" as X Axis', function(done) {
+
+        destroyGraphDiv();
+
+        var xPoints = ['2017-10-04 00:00:00', '2017-10-04 12:00:00', '2017-10-05 00:00:00'];
+        var yPoints = [0, 50, 100];
+        var xRange = ['2017-10-04 00:00:00', '2017-10-05 00:00:00'];
+        var yRange = [0, 100];
+
+        var svcursorOptions = [
+            {
+                x: '2017-10-04 06:00:00'
+            }];
+
+
+        var groupInfo = {
+            groupIndex: 0,
+            xValue: 'Oct 4, 2017, 06:00',
+            flagValues: '25',
+            xPos: 50
+        };
+
+        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'linear').then(function() {
+            doDataZoom(groupInfo).then(function() {
+                testCursorContent(groupInfo);
+                done();
+            });
+        });
+    });
+
+    it('with "date" as X Axis and without cursor', function(done) {
+
+        destroyGraphDiv();
+
+        var xPoints = ['2017-10-04 00:00:00', '2017-10-04 12:00:00', '2017-10-05 00:00:00'];
+        var yPoints = [0, 50, 100];
+        var xRange = ['2017-10-04 00:00:00', '2017-10-05 00:00:00'];
+        var yRange = [0, 100];
+
+        var svcursorOptions = [
+            {
+                x: '2017-10-04 00:00:00'
+            }];
+
+
+        var groupInfo = {
+            groupIndex: 0,
+            xValue: 'Oct 4, 2017, 06:00',
+            flagValues: '25',
+            xPos: -275
+        };
+
+        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'hv').then(function() {
+            doDataZoom(groupInfo, 40).then(function() {
+                testXPosition(groupInfo);
+                done();
+            });
+        });
+    });
+
 
 });
