@@ -83,11 +83,9 @@ function delSVCursor(gd) {
 
     if(newSvcursorsOut.length) {
         newSvcursorsOut.pop();
-        if(newSvcursorsOut.length) {
-            update = {
-                svcursors: newSvcursorsOut
-            };
-        }
+        update = {
+            svcursors: newSvcursorsOut
+        };
     }
 
     Registry.call('relayout', gd, update);

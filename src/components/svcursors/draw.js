@@ -220,6 +220,7 @@ function drawOne(gd, index) {
 
         var cursorGroup = Lib.ensureSingleById(svcursorLayer, 'g', id);
         cursorGroup.classed(CURSOR_GROUP_CLASS, true);
+        cursorGroup.attr({'xref': svcursorOptions.xref});
 
         var lineColor = svcursorOptions.line.width ? svcursorOptions.line.color : 'rgba(0,0,0,0)';
         var path = cursorGroup.append('path')
@@ -463,7 +464,10 @@ function createLabelText(hoverData, opts, gd, svcursorOptions, cursorGroup) {
     var fontSize = opts.fontSize || FxConstants.HOVERFONTSIZE;
 
     var xa = Axes.getFromId(gd, svcursorOptions.xref);
-    var ya = Axes.getFromId(gd, svcursorOptions.yref);
+
+    var yId = xa.anchor;
+
+    var ya = Axes.getFromId(gd, yId);
 
     var convFunc = getConvertFunction(gd, svcursorOptions);
 
@@ -640,11 +644,27 @@ function createLabels(gd, svcursorOptions, cursorGroup, fixYValues) {
         hoverdistance: fullLayout.hoverdistance
     };
 
-    var subplots = gd._fullLayout._subplots.cartesian;
+    var subplots = getCursorSubplots(gd, svcursorOptions);
+
     var hoverData = initCursorData(gd, subplots, svcursorOptions, fixYValues);
-    createLabelText(hoverData, labelOpts, gd, svcursorOptions, cursorGroup);
+    createLabelText(hoverData, labelOpts, gd, svcursorOptions, cursorGroup, subplots);
 }
 
+function getCursorSubplots(gd, svcursorOptions) {
+    var subplots = gd._fullLayout._subplots.cartesian;
+    var cursorXAxis = Axes.getFromId(gd, svcursorOptions.xref);
+    var xAxisId = cursorXAxis._id;
+    var subId = xAxisId + 'y';
+    var arr = [];
+
+    for(var i = 0; i < subplots.length; i++) {
+        var subplot = subplots[i];
+        if(subplot.indexOf(subId) !== -1) {
+            arr.push(subplot);
+        }
+    }
+    return arr;
+}
 
 function initCursorData(gd, subplot, svcursorOptions, fixYValues) {
     if(!subplot) subplot = 'xy';
@@ -656,7 +676,6 @@ function initCursorData(gd, subplot, svcursorOptions, fixYValues) {
     var fullLayout = gd._fullLayout;
     var plots = fullLayout._plots || [];
     var plotinfo = plots[subplot];
-    // var hasCartesian = fullLayout._has('cartesian');
 
     // list of all overlaid subplots to look at
     if(plotinfo) {
@@ -708,7 +727,6 @@ function initCursorData(gd, subplot, svcursorOptions, fixYValues) {
         subplotId,
         subploti,
         pointData;
-
 
     for(curvenum = 0; curvenum < gd.calcdata.length; curvenum++) {
         cd = gd.calcdata[curvenum];

@@ -67,9 +67,14 @@ var testTrace2 = {
 //     return d3.selectAll('.shapelayer g[data-index="' + index + '"] circle[data-line-point="end-point"]').node();
 // }
 
-function countSvcursorGroups() {
+function countSvcursorGroups(xAxisRef) {
     var groupClass = '.svcursor_group';
-    return d3.selectAll(groupClass).size();
+    var groups = d3.selectAll(groupClass);
+    if(xAxisRef !== undefined) {
+        return groups.filter(function() { return d3.select(this).attr('xref') === xAxisRef;}).size();
+    } else {
+        return groups.size();
+    }
 }
 
 function ifSvcursorGroupExists(groupIndex) {
@@ -173,14 +178,14 @@ function addDeleteCursorTest(testInfo, done) {
     var addCursor = function() {
         promise = promise.then(function() {
             expect(ifSvcursorGroupExists(groupInfo1.groupIndex)).toBeFalsy();
-            expect(countSvcursorGroups()).toEqual(1);
+            expect(countSvcursorGroups(groupInfo0.xref)).toEqual(1);
 
             testCursorContent(groupInfo0);
 
 
             getAddCursorButton(gd).click();
 
-            expect(countSvcursorGroups()).toEqual(2);
+            expect(countSvcursorGroups(groupInfo0.xref)).toEqual(2);
 
             testCursorContent(groupInfo0);
             testCursorContent(groupInfo1);
@@ -188,7 +193,7 @@ function addDeleteCursorTest(testInfo, done) {
             getDelCursorButton(gd).click();
 
             expect(ifSvcursorGroupExists(groupInfo1.groupIndex)).toBeFalsy();
-            expect(countSvcursorGroups()).toEqual(1);
+            expect(countSvcursorGroups(groupInfo0.xref)).toEqual(1);
 
             testCursorContent(groupInfo0);
 
@@ -1092,6 +1097,104 @@ describe('Test svcursors move', function() {
         .catch(failTest)
         .then(done);
     });
+});
 
+describe('Test svcursors subplots', function() {
+
+    it('for 2 traces in two subpolots', function(done) {
+        destroyGraphDiv();
+        var gd = createGraphDiv();
+
+        var svcursorOptions1 = [
+            {
+                x: 3.5
+            },
+            {
+                x: 4.5,
+                xref: 'x2'
+            }
+        ];
+
+        var trace1 = Lib.extendDeep({}, testTrace1);
+
+        var yaxisOpt2 = {yaxis: 'y2'};
+
+        var trace2 = Lib.extendDeep({}, testTrace2, yaxisOpt2);
+
+        var yaxisOpt3 = {xaxis: 'x2', yaxis: 'y3'};
+
+        var trace3 = Lib.extendDeep({}, testTrace2, yaxisOpt3);
+
+        var yaxisOpt4 = {xaxis: 'x2', yaxis: 'y4'};
+        var trace4 = Lib.extendDeep({}, testTrace1, yaxisOpt4);
+
+        var layout = {
+            hovermode: false,
+            xaxis: {
+                title: 'X axis 1',
+                domain: [0.1, 1],
+            },
+            xaxis2: {
+                title: 'X axis 2',
+                domain: [0.1, 1],
+                anchor: 'y3'
+            },
+
+            yaxis: {
+                title: 'Y axis',
+                domain: [0, 0.4],
+            },
+
+            yaxis2: {
+                title: 'Y2 axis',
+                overlaying: 'y',
+                side: 'left',
+                anchor: 'free',
+            },
+
+            yaxis3: {
+                domain: [0.6, 1],
+                title: 'Y3 axis',
+                anchor: 'x2'
+            },
+
+            yaxis4: {
+                title: 'Y4 axis',
+                overlaying: 'y3',
+                anchor: 'free',
+                side: 'left',
+            },
+
+            svcursors: svcursorOptions1
+        };
+
+        var groupInfo0 = {
+            groupIndex: 0,
+            xValue: '3.5',
+            flagValues: '7.25,1.25',
+            xref: 'x'
+        };
+
+        var groupInfo1 = {
+            groupIndex: 1,
+            xValue: '4.5',
+            flagValues: '1.75,7.75',
+            xref: 'x2'
+        };
+
+        Plotly.plot(gd, [trace1, trace2, trace3, trace4], layout).then(function() {
+            expect(countSvcursorGroups())
+                .toEqual(2);
+            expect(countSvcursorGroups('x'))
+                .toEqual(1);
+            expect(countSvcursorGroups('x2'))
+                .toEqual(1);
+
+            testCursorContent(groupInfo0);
+            testCursorContent(groupInfo1);
+        })
+        .catch(failTest)
+        .then(done);
+    });
 
 });
