@@ -37,4 +37,4 @@ exports.makeTemplate = templateApi.makeTemplate;
 exports.validateTemplate = templateApi.validateTemplate;
 
 var Tracecursors = require('../components/tracecursors/draw');
-exports.updateFlags = Tracecursors.updateFlags;
+exports.updateTraceCursor = Tracecursors.updateTraceCursor;

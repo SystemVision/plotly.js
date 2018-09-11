@@ -482,6 +482,59 @@ describe('Test add/delete tracecursors for:', function() {
         addDeleteCursorTest(testInfo, done);
     });
 
+    it('single trace on single X axis with category', function(done) {
+        destroyGraphDiv();
+        var gd = createGraphDiv();
+
+        var tracecursorOptions = [
+
+            {
+                x: 0.2
+            }];
+
+        var trace1 = {
+            'x': ['aaa', 'bbb', 'ccc'],
+            'y': [0, 50, 100],
+            'type': 'scatter',
+        };
+
+        var layout = {
+            hovermode: false,
+            showlegend: true,
+
+            xaxis: {
+                title: 'X axis',
+            },
+
+            yaxis: {
+                title: 'Y axis'
+            },
+            tracecursors: tracecursorOptions,
+        };
+
+        var groupInfo0 = {
+            groupIndex: 0,
+            xValue: 'aaa',
+            flagValues: '10'
+        };
+
+        var groupInfo1 = {
+            groupIndex: 1,
+            xValue: 'bbb',
+            flagValues: '50'
+        };
+
+        var testInfo = {
+            gd: gd,
+            layout: layout,
+            data: [trace1],
+            groupInfo0: groupInfo0,
+            groupInfo1: groupInfo1
+        };
+
+        addDeleteCursorTest(testInfo, done);
+    });
+
     it('for single trace on "date" X axis', function(done) {
         destroyGraphDiv();
         var gd = createGraphDiv();
@@ -1039,6 +1092,29 @@ describe('Test tracecursors move', function() {
         .then(done);
     });
 
+    it('with "category" as X axis type', function(done) {
+        destroyGraphDiv();
+
+        var xPoints = ['aaa', 'bbb', 'ccc'];
+        var yPoints = [0, 50, 100];
+        var xRange = [0, 2];
+        var yRange = [0, 100];
+
+        var tracecursorOptions = Lib.extendDeep([], defaultTracecursorOptions);
+
+        var catInfos = Lib.extendDeep({}, defaultInfos);
+
+        catInfos[0].xValue = 'aaa';
+        catInfos[25].xValue = 'bbb';
+        catInfos[50].xValue = 'bbb';
+        catInfos[75].xValue = 'ccc';
+        catInfos[100].xValue = 'ccc';
+
+        makePlot(tracecursorOptions, xPoints, yPoints, xRange, yRange, 'linear').then(function() {
+            return checkDragging(getCursorLine, catInfos);
+        }).catch(failTest)
+        .then(done);
+    });
 
     it(' test position', function(done) {
         destroyGraphDiv();

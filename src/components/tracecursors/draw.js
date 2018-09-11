@@ -42,7 +42,7 @@ var CURSOR_GROUP_CLASS = 'tracecursor_group';
 var CURSOR_AXIS_LABEL_CLASS = 'tracecursor_axis_label';
 var CURSOR_FLAG_CLASS = 'tracecursor_flag';
 
-var supportedAxisTypes = ['linear', 'date', 'log'];
+var supportedAxisTypes = ['linear', 'date', 'log', 'category'];
 
 // tracecursors are stored in gd.layout.tracecursors, an array of objects
 // index can point to one item in this array,
@@ -56,7 +56,7 @@ var supportedAxisTypes = ['linear', 'date', 'log'];
 module.exports = {
     draw: draw,
     drawOne: drawOne,
-    updateFlags: updateFlags
+    updateTraceCursor: updateFlags
 };
 
 function draw(gd) {
@@ -76,7 +76,7 @@ function draw(gd) {
 
 function isInRange(x, cursorXAxis) {
     var dd = {};
-    dd.x = x;
+    dd.x = getXValueAsNumber(x, cursorXAxis).xVal;
     return cursorXAxis.isPtWithinRange(dd, cursorXAxis.calendar);
 }
 
@@ -149,6 +149,16 @@ function fixXValue(x, cursorXAxis) {
     return xval;
 }
 
+function setClipPath(tracecursorPath, gd, tracecursorOptions) {
+
+    var clipAxes = (tracecursorOptions.xref + tracecursorOptions.yref).replace(/paper/g, '');
+
+    tracecursorPath.call(Drawing.setClipUrl, clipAxes ?
+      ('clip' + gd._fullLayout._uid + clipAxes) :
+      null
+    );
+}
+
 function drawOne(gd, index) {
     // remove the existing tracecursor if there is one.
     // because indices can change, we need to look in all tracecursor layers
@@ -205,6 +215,13 @@ function drawOne(gd, index) {
         cursorGroup.classed(CURSOR_GROUP_CLASS, true);
         cursorGroup.attr({'xref': tracecursorOptions.xref});
 
+        // Don't show common label and flags if the cursor itself is not visible
+        if(!isInRange(tracecursorOptions.x, cursorXAxis)) {
+            cursorGroup.selectAll('g.' + CURSOR_AXIS_LABEL_CLASS).remove();
+            cursorGroup.selectAll('g.' + CURSOR_FLAG_CLASS).remove();
+            return;
+        }
+
         var lineColor = tracecursorOptions.line.width ? tracecursorOptions.line.color : 'rgba(0,0,0,0)';
         var path = cursorGroup.append('path')
             .attr(attrs)
@@ -221,6 +238,8 @@ function drawOne(gd, index) {
         //       console.log('left click')
         //     }
         //   });
+
+        setClipPath(path, gd, tracecursorOptions);
 
         createLabels(gd, tracecursorOptions, cursorGroup, null);
 
@@ -337,6 +356,7 @@ function setupDragElement(gd, tracecursorPath, tracecursorOptions, index, cursor
             return;
         }
         setCursor(tracecursorPath);
+        setClipPath(tracecursorPath, gd, tracecursorOptions);
 
         Registry.call('relayout', gd, update).then(function() {
             var eventData = {
