@@ -617,7 +617,7 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
 
         redrawObjs(gd._fullLayout.annotations || [], Registry.getComponentMethod('annotations', 'drawOne'));
         redrawObjs(gd._fullLayout.shapes || [], Registry.getComponentMethod('shapes', 'drawOne'));
-        redrawObjs(gd._fullLayout.svcursors || [], Registry.getComponentMethod('svcursors', 'drawOne'));
+        redrawObjs(gd._fullLayout.tracecursors || [], Registry.getComponentMethod('tracecursors', 'drawOne'));
         redrawObjs(gd._fullLayout.images || [], Registry.getComponentMethod('images', 'draw'), true);
     }
 

@@ -54,7 +54,7 @@ register([
     require('./components/rangeselector'),
     require('./components/grid'),
     require('./components/errorbars'),
-    require('./components/svcursors')
+    require('./components/tracecursors')
 ]);
 
 // locales en and en-US are required for default behavior

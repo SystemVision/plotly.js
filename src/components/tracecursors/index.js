@@ -13,11 +13,11 @@ var drawModule = require('./draw');
 
 module.exports = {
     moduleType: 'component',
-    name: 'svcursors',
+    name: 'tracecursors',
 
     layoutAttributes: require('./attributes'),
     supplyLayoutDefaults: require('./defaults'),
-    includeBasePlot: require('../../plots/cartesian/include_components')('svcursors'),
+    includeBasePlot: require('../../plots/cartesian/include_components')('tracecursors'),
 
     calcAutorange: require('./calc_autorange'),
     draw: drawModule.draw,

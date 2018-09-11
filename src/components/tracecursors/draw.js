@@ -38,20 +38,20 @@ var loggersModule = require('../../lib/loggers');
 var isNumeric = require('fast-isnumeric');
 var getTraceColor = require('../../traces/scatter/get_trace_color');
 
-var CURSOR_GROUP_CLASS = 'svcursor_group';
-var CURSOR_AXIS_LABEL_CLASS = 'svcursor_axis_label';
-var CURSOR_FLAG_CLASS = 'svcursor_flag';
+var CURSOR_GROUP_CLASS = 'tracecursor_group';
+var CURSOR_AXIS_LABEL_CLASS = 'tracecursor_axis_label';
+var CURSOR_FLAG_CLASS = 'tracecursor_flag';
 
 var supportedAxisTypes = ['linear', 'date', 'log'];
 
-// svcursors are stored in gd.layout.svcursors, an array of objects
+// tracecursors are stored in gd.layout.tracecursors, an array of objects
 // index can point to one item in this array,
 //  or non-numeric to simply add a new one
 //  or -1 to modify all existing
 // opt can be the full options object, or one key (to be set to value)
 //  or undefined to simply redraw
 // if opt is blank, val can be 'add' or a full options object to add a new
-//  svcursor at that point in the array, or 'remove' to delete this one
+//  tracecursor at that point in the array, or 'remove' to delete this one
 
 module.exports = {
     draw: draw,
@@ -62,14 +62,14 @@ module.exports = {
 function draw(gd) {
     var fullLayout = gd._fullLayout;
 
-    // Remove previous svcursors before drawing new in svcursors in fullLayout.svcursors
+    // Remove previous tracecursors before drawing new in tracecursors in fullLayout.tracecursors
 
     var sel = gd._fullLayout._paperdiv.selectAll('.' + CURSOR_GROUP_CLASS);
-    if(sel.size() !== fullLayout.svcursors.length) {
+    if(sel.size() !== fullLayout.tracecursors.length) {
         sel.remove();
     }
 
-    for(var i = 0; i < fullLayout.svcursors.length; i++) {
+    for(var i = 0; i < fullLayout.tracecursors.length; i++) {
         drawOne(gd, i);
     }
 }
@@ -82,11 +82,11 @@ function isInRange(x, cursorXAxis) {
 
 function updateFlags(gd, index, yValues) {
 
-    var svcursorOptions = gd._fullLayout.svcursors[index];
+    var tracecursorOptions = gd._fullLayout.tracecursors[index];
 
     var selector = '#cursorGroup_' + index;
     var cursorGroup = d3.select(selector);
-    createLabels(gd, svcursorOptions, cursorGroup, yValues);
+    createLabels(gd, tracecursorOptions, cursorGroup, yValues);
 }
 
 function getXValueAsNumber(xVal, cursorXAxis) {
@@ -150,16 +150,16 @@ function fixXValue(x, cursorXAxis) {
 }
 
 function drawOne(gd, index) {
-    // remove the existing svcursor if there is one.
-    // because indices can change, we need to look in all svcursor layers
+    // remove the existing tracecursor if there is one.
+    // because indices can change, we need to look in all tracecursor layers
     gd._fullLayout._paperdiv
-        .selectAll('.svcursorlayer [data-index="' + index + '"]')
+        .selectAll('.tracecursorlayer [data-index="' + index + '"]')
         .remove();
 
-    var optionsIn = (gd.layout.svcursors || [])[index],
-        svcursorOptions = gd._fullLayout.svcursors[index];
+    var optionsIn = (gd.layout.tracecursors || [])[index],
+        tracecursorOptions = gd._fullLayout.tracecursors[index];
 
-    // this svcursor is gone - quit now after deleting it
+    // this tracecursor is gone - quit now after deleting it
     // TODO: use d3 idioms instead of deleting and redrawing every time
     if(!optionsIn) return;
 
@@ -169,24 +169,7 @@ function drawOne(gd, index) {
         return;
     }
 
-    // if(svcursorOptions.layer !== 'below') {
-    //     drawSvcursor(gd._fullLayout._svcursorUpperLayer, index);
-    // }
-    // else {
-    //     var plotinfo = gd._fullLayout._plots[svcursorOptions.xref + svcursorOptions.yref];
-    //     if(plotinfo) {
-    //         var mainPlot = plotinfo.mainplotinfo || plotinfo;
-    //         drawSvcursor(mainPlot.svcursorlayer, index);
-    //     }
-    //     else {
-    //         // Fall back to _svcursorUpperLayer in case the requested subplot doesn't exist.
-    //         // This can happen if you reference the svcursor to an x / y axis combination
-    //         // that doesn't have any data on it
-    //         drawSvcursor(gd._fullLayout._svcursorUpperLayer, index);
-    //     }
-    // }
-
-    drawSvcursor(index);
+    drawTracecursor(index);
 
     function isAxisSupported(axisType) {
 
@@ -198,11 +181,11 @@ function drawOne(gd, index) {
         return false;
     }
 
-    function drawSvcursor(index) {
+    function drawTracecursor(index) {
 
-        var svcursorLayer = gd._fullLayout._svcursorUpperLayer;
+        var tracecursorLayer = gd._fullLayout._tracecursorUpperLayer;
 
-        var cursorXAxis = Axes.getFromId(gd, svcursorOptions.xref);
+        var cursorXAxis = Axes.getFromId(gd, tracecursorOptions.xref);
         var axisType = cursorXAxis.type;
 
 
@@ -215,20 +198,20 @@ function drawOne(gd, index) {
         var attrs = {
             'data-index': index,
             'fill-rule': 'evenodd',
-            d: getPathString(gd, svcursorOptions)
+            d: getPathString(gd, tracecursorOptions)
         };
 
-        var cursorGroup = Lib.ensureSingleById(svcursorLayer, 'g', id);
+        var cursorGroup = Lib.ensureSingleById(tracecursorLayer, 'g', id);
         cursorGroup.classed(CURSOR_GROUP_CLASS, true);
-        cursorGroup.attr({'xref': svcursorOptions.xref});
+        cursorGroup.attr({'xref': tracecursorOptions.xref});
 
-        var lineColor = svcursorOptions.line.width ? svcursorOptions.line.color : 'rgba(0,0,0,0)';
+        var lineColor = tracecursorOptions.line.width ? tracecursorOptions.line.color : 'rgba(0,0,0,0)';
         var path = cursorGroup.append('path')
             .attr(attrs)
-            .style('opacity', svcursorOptions.opacity)
+            .style('opacity', tracecursorOptions.opacity)
             .call(Color.stroke, lineColor)
-            .call(Color.fill, svcursorOptions.fillcolor)
-            .call(Drawing.dashLine, svcursorOptions.line.dash, svcursorOptions.line.width);
+            .call(Color.fill, tracecursorOptions.fillcolor)
+            .call(Drawing.dashLine, tracecursorOptions.line.dash, tracecursorOptions.line.width);
         // SystemVision: To support context menu
         // .on("contextmenu", function (d, i) {
         //     d3.event.preventDefault();
@@ -239,11 +222,11 @@ function drawOne(gd, index) {
         //     }
         //   });
 
-        createLabels(gd, svcursorOptions, cursorGroup, null);
+        createLabels(gd, tracecursorOptions, cursorGroup, null);
 
         // SystemVision: Always support dragging
-        if(svcursorOptions.cursorMode !== 'frozen') {
-            setupDragElement(gd, path, svcursorOptions, index, cursorGroup);
+        if(tracecursorOptions.cursorMode !== 'frozen') {
+            setupDragElement(gd, path, tracecursorOptions, index, cursorGroup);
         }
     }
 }
@@ -298,29 +281,29 @@ function cleanPoint(d) {
 }
 
 
-function setupDragElement(gd, svcursorPath, svcursorOptions, index, cursorGroup) {
+function setupDragElement(gd, tracecursorPath, tracecursorOptions, index, cursorGroup) {
     var MINWIDTH = 10,
         MINHEIGHT = 10;
 
     var update;
     var x0, astrX0;
 
-    var xa = Axes.getFromId(gd, svcursorOptions.xref);
+    var xa = Axes.getFromId(gd, tracecursorOptions.xref);
 
-    var convFunc = getConvertFunction(gd, svcursorOptions);
+    var convFunc = getConvertFunction(gd, tracecursorOptions);
 
     var dragOptions = {
-            element: svcursorPath.node(),
+            element: tracecursorPath.node(),
             gd: gd,
             prepFn: startDrag,
             doneFn: endDrag,
-            curX: svcursorOptions.x
+            curX: tracecursorOptions.x
         },
         dragBBox = dragOptions.element.getBoundingClientRect();
 
     dragElement.init(dragOptions);
 
-    svcursorPath.node().onmousemove = updateDragMode;
+    tracecursorPath.node().onmousemove = updateDragMode;
 
     function updateDragMode(evt) {
         // choose 'move' or 'resize'
@@ -333,33 +316,33 @@ function setupDragElement(gd, svcursorPath, svcursorOptions, index, cursorGroup)
                 dragElement.getCursor(x / w, 1 - y / h) :
                 'move';
 
-        setCursor(svcursorPath, cursor);
+        setCursor(tracecursorPath, cursor);
     }
 
     function startDrag(evt) {
-        svcursorOptions.x = fixXValue(svcursorOptions.x, xa);
+        tracecursorOptions.x = fixXValue(tracecursorOptions.x, xa);
 
-        x0 = convFunc.x2p(svcursorOptions.x);
-        astrX0 = 'svcursors[' + index + ']' + '.x';
+        x0 = convFunc.x2p(tracecursorOptions.x);
+        astrX0 = 'tracecursors[' + index + ']' + '.x';
 
         update = {};
 
         // setup dragMode and the corresponding handler
         updateDragMode(evt);
-        dragOptions.moveFn = movesvcursor;
+        dragOptions.moveFn = movetracecursor;
     }
 
     function endDrag() {
-        if(svcursorOptions.cursorMode === 'frozen') {
+        if(tracecursorOptions.cursorMode === 'frozen') {
             return;
         }
-        setCursor(svcursorPath);
+        setCursor(tracecursorPath);
 
         Registry.call('relayout', gd, update).then(function() {
             var eventData = {
                 index: index,
-                svcursor: svcursorOptions._input,
-                fullSVCursor: svcursorOptions,
+                tracecursor: tracecursorOptions._input,
+                fullTracecursor: tracecursorOptions,
                 event: d3.event
             };
 
@@ -375,31 +358,31 @@ function setupDragElement(gd, svcursorPath, svcursorOptions, index, cursorGroup)
         });
     }
 
-    function movesvcursor(dx) {
-        if(svcursorOptions.cursorMode === 'frozen') {
+    function movetracecursor(dx) {
+        if(tracecursorOptions.cursorMode === 'frozen') {
             return;
         }
 
-        if(svcursorOptions.type === 'line') {
+        if(tracecursorOptions.type === 'line') {
 
             var newX = convFunc.p2x(x0 + dx);
             newX = fixXValue(newX, xa);
 
             if(newX !== null && newX !== undefined) {
-                update[astrX0] = svcursorOptions.x = newX;
+                update[astrX0] = tracecursorOptions.x = newX;
             }
         }
 
-        svcursorPath.attr('d', getPathString(gd, svcursorOptions));
+        tracecursorPath.attr('d', getPathString(gd, tracecursorOptions));
 
-        createLabels(gd, svcursorOptions, cursorGroup, null);
+        createLabels(gd, tracecursorOptions, cursorGroup, null);
     }
 }
 
-function getConvertFunction(gd, svcursorOptions) {
+function getConvertFunction(gd, tracecursorOptions) {
 
-    var xa = Axes.getFromId(gd, svcursorOptions.xref),
-        ya = Axes.getFromId(gd, svcursorOptions.yref);
+    var xa = Axes.getFromId(gd, tracecursorOptions.xref),
+        ya = Axes.getFromId(gd, tracecursorOptions.yref);
     var x2r, x2p, y2r, y2p;
     var p2x, p2y;
 
@@ -434,14 +417,14 @@ function getConvertFunction(gd, svcursorOptions) {
     return convFunc;
 }
 
-function getPathString(gd, svcursorOptions) {
+function getPathString(gd, tracecursorOptions) {
 
-    var xa = Axes.getFromId(gd, svcursorOptions.xref);
+    var xa = Axes.getFromId(gd, tracecursorOptions.xref);
 
-    var convFunc = getConvertFunction(gd, svcursorOptions);
+    var convFunc = getConvertFunction(gd, tracecursorOptions);
 
     var x0, x1;
-    x0 = x1 = convFunc.x2p(svcursorOptions.x);
+    x0 = x1 = convFunc.x2p(tracecursorOptions.x);
 
     var y0 = xa._counterSpan[0];
     var y1 = xa._counterSpan[1];
@@ -450,7 +433,7 @@ function getPathString(gd, svcursorOptions) {
 
 }
 
-function createLabelText(hoverData, opts, gd, svcursorOptions, cursorGroup) {
+function createLabelText(hoverData, opts, gd, tracecursorOptions, cursorGroup) {
     var bgColor = opts.bgColor;
     var container = cursorGroup;// opts.container;
     var outerContainer = opts.outerContainer;
@@ -463,17 +446,17 @@ function createLabelText(hoverData, opts, gd, svcursorOptions, cursorGroup) {
     var fontFamily = opts.fontFamily || FxConstants.HOVERFONT;
     var fontSize = opts.fontSize || FxConstants.HOVERFONTSIZE;
 
-    var xa = Axes.getFromId(gd, svcursorOptions.xref);
+    var xa = Axes.getFromId(gd, tracecursorOptions.xref);
 
     var yId = xa.anchor;
 
     var ya = Axes.getFromId(gd, yId);
 
-    var convFunc = getConvertFunction(gd, svcursorOptions);
+    var convFunc = getConvertFunction(gd, tracecursorOptions);
 
-    var x0 = convFunc.x2p(svcursorOptions.x);
+    var x0 = convFunc.x2p(tracecursorOptions.x);
 
-    var result = getXValueAsNumber(svcursorOptions.x, xa);
+    var result = getXValueAsNumber(tracecursorOptions.x, xa);
     var xLabelValue = result.xVal;
 
     var xAxisLabelText = Axes.hoverLabelText(xa, xLabelValue);
@@ -505,7 +488,7 @@ function createLabelText(hoverData, opts, gd, svcursorOptions, cursorGroup) {
 
         ltext.text(xAxisLabelText)
             .attr('label-value', xLabelValue)
-            .attr('label-date', svcursorOptions.x)
+            .attr('label-date', tracecursorOptions.x)
             .call(Drawing.font,
                 commonLabelOpts.font.family || fontFamily,
                 commonLabelOpts.font.size || fontSize,
@@ -632,27 +615,27 @@ function createLabelText(hoverData, opts, gd, svcursorOptions, cursorGroup) {
     return hoverLabels;
 }
 
-function createLabels(gd, svcursorOptions, cursorGroup, fixYValues) {
+function createLabels(gd, tracecursorOptions, cursorGroup, fixYValues) {
 
     var fullLayout = gd._fullLayout;
     var labelOpts = {
         hovermode: 'x',
         bgColor: Color.background || 'black',
-        container: gd._fullLayout._svcursorUpperLayer,
+        container: gd._fullLayout._tracecursorUpperLayer,
         outerContainer: fullLayout._paperdiv,
         commonLabelOpts: fullLayout.hoverlabel,
         hoverdistance: fullLayout.hoverdistance
     };
 
-    var subplots = getCursorSubplots(gd, svcursorOptions);
+    var subplots = getCursorSubplots(gd, tracecursorOptions);
 
-    var hoverData = initCursorData(gd, subplots, svcursorOptions, fixYValues);
-    createLabelText(hoverData, labelOpts, gd, svcursorOptions, cursorGroup, subplots);
+    var hoverData = initCursorData(gd, subplots, tracecursorOptions, fixYValues);
+    createLabelText(hoverData, labelOpts, gd, tracecursorOptions, cursorGroup, subplots);
 }
 
-function getCursorSubplots(gd, svcursorOptions) {
+function getCursorSubplots(gd, tracecursorOptions) {
     var subplots = gd._fullLayout._subplots.cartesian;
-    var cursorXAxis = Axes.getFromId(gd, svcursorOptions.xref);
+    var cursorXAxis = Axes.getFromId(gd, tracecursorOptions.xref);
     var xAxisId = cursorXAxis._id;
     var subId = xAxisId + 'y';
     var arr = [];
@@ -666,7 +649,7 @@ function getCursorSubplots(gd, svcursorOptions) {
     return arr;
 }
 
-function initCursorData(gd, subplot, svcursorOptions, fixYValues) {
+function initCursorData(gd, subplot, tracecursorOptions, fixYValues) {
     if(!subplot) subplot = 'xy';
 
     // if the user passed in an array of subplots,
@@ -687,7 +670,7 @@ function initCursorData(gd, subplot, svcursorOptions, fixYValues) {
     }
 
     var len = subplots.length;
-    var cursorXAxis = Axes.getFromId(gd, svcursorOptions.xref);
+    var cursorXAxis = Axes.getFromId(gd, tracecursorOptions.xref);
 
     var yaArray = new Array(len);
 
@@ -769,7 +752,7 @@ function initCursorData(gd, subplot, svcursorOptions, fixYValues) {
         // SystemVision: If we use "date" in X axis, let be sure that we use x (as a time) in ms
         // So transfrom it from "2013-11-10 22:23:00" into 1384122180000, for example
 
-        var result = getXValueAsNumber(svcursorOptions.x, cursorXAxis);
+        var result = getXValueAsNumber(tracecursorOptions.x, cursorXAxis);
         var xValue = result.xVal;
 
         // SystemVision: We do not use yval to find hoverPoints, so it can be set to arbitrary value

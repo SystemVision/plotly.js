@@ -8,7 +8,7 @@
 
 'use strict';
 
-/* eslint-disable no-console */
+/* eslint-disable no-console *//* eslint-disable no-console */
 
 var config = require('../plot_api/plot_config');
 

@@ -14,7 +14,7 @@ var Plots = require('../../plots/plots');
 var axisIds = require('../../plots/cartesian/axis_ids');
 var Lib = require('../../lib');
 var Icons = require('../../../build/ploticon');
-var SVCursorsManager = require('../../components/svcursors/manage');
+var TraceCursorsManager = require('../../components/tracecursors/manage');
 
 var _ = Lib._;
 
@@ -46,18 +46,18 @@ var modeBarButtons = module.exports = {};
  *      is the button a toggle button?
  */
 
-modeBarButtons.svcursorAdd = {
-    name: 'svcursorAdd',
+modeBarButtons.tracecursorAdd = {
+    name: 'tracecursorAdd',
     title: function(gd) { return _(gd, 'Add vertical cursor'); },
     icon: Icons.svplus,
-    click: SVCursorsManager.add
+    click: TraceCursorsManager.add
 };
 
-modeBarButtons.svcursorDel = {
-    name: 'svcursorDel',
+modeBarButtons.tracecursorDel = {
+    name: 'tracecursorDel',
     title: function(gd) { return _(gd, 'Delete vertical cursor'); },
     icon: Icons.svminus,
-    click: SVCursorsManager.delete
+    click: TraceCursorsManager.delete
 };
 
 modeBarButtons.toImage = {

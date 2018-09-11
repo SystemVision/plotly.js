@@ -16,29 +16,29 @@ var Registry = require('../../registry');
 var Lib = require('../../lib');
 
 module.exports = {
-    add: addSVCursor,
-    delete: delSVCursor
+    add: addTraceCursor,
+    delete: delTraceCursor
 };
 
 /**
- * SVCursors wrapper around 'add' and 'delete'.
+ * Tracecursors wrapper around 'add' and 'delete'.
  *
  * @param {object} gd main plot object
  *
  */
 
-function addSVCursor(gd) {
+function addTraceCursor(gd) {
     // Get only "x" axes
     var axList = axisIds.list(gd, 'x', true);
 
     var rangeNow = [0, 1];
 
-    var newSvcursorsOut = [];// Lib.extendDeepAll({}, gd._fullLayout.svcursors);
+    var newTraceCursorsOut = [];// Lib.extendDeepAll({}, gd._fullLayout.tracecursors);
 
 
-    for(var j = 0; j < gd._fullLayout.svcursors.length; j++) {
-        var cur = Lib.extendDeepAll({}, gd._fullLayout.svcursors[j]);
-        newSvcursorsOut.push(cur);
+    for(var j = 0; j < gd._fullLayout.tracecursors.length; j++) {
+        var cur = Lib.extendDeepAll({}, gd._fullLayout.tracecursors[j]);
+        newTraceCursorsOut.push(cur);
     }
 
     for(var i = 0; i < axList.length; i++) {
@@ -54,37 +54,37 @@ function addSVCursor(gd) {
             xVal = ax.c2d(xVal, 0, ax.calendar);
         }
 
-        var newSvcursorsIn = {
+        var newTraceCursorsIn = {
             x: xVal,
             xref: ax._id
         };
 
-        newSvcursorsOut.push(newSvcursorsIn);
+        newTraceCursorsOut.push(newTraceCursorsIn);
     }
 
     var update = {
-        svcursors: newSvcursorsOut
+        tracecursors: newTraceCursorsOut
     };
 
     Registry.call('relayout', gd, update);
 
 }
 
-function delSVCursor(gd) {
+function delTraceCursor(gd) {
     var update = [];
 
-    var newSvcursorsOut = [];
+    var newTraceCursorsOut = [];
 
 
-    for(var j = 0; j < gd._fullLayout.svcursors.length; j++) {
-        var cur = Lib.extendDeepAll({}, gd._fullLayout.svcursors[j]);
-        newSvcursorsOut.push(cur);
+    for(var j = 0; j < gd._fullLayout.tracecursors.length; j++) {
+        var cur = Lib.extendDeepAll({}, gd._fullLayout.tracecursors[j]);
+        newTraceCursorsOut.push(cur);
     }
 
-    if(newSvcursorsOut.length) {
-        newSvcursorsOut.pop();
+    if(newTraceCursorsOut.length) {
+        newTraceCursorsOut.pop();
         update = {
-            svcursors: newSvcursorsOut
+            tracecursors: newTraceCursorsOut
         };
     }
 

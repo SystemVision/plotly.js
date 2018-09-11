@@ -36,5 +36,5 @@ var templateApi = require('./template_api');
 exports.makeTemplate = templateApi.makeTemplate;
 exports.validateTemplate = templateApi.validateTemplate;
 
-var SVCursors = require('../components/svcursors/draw');
-exports.updateFlags = SVCursors.updateFlags;
+var Tracecursors = require('../components/tracecursors/draw');
+exports.updateFlags = Tracecursors.updateFlags;

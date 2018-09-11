@@ -328,7 +328,7 @@ describe('ModeBar', function() {
                 ['toImage', 'sendDataToCloud'],
                 ['zoom2d', 'pan2d'],
                 ['zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetScale2d'],
-                ['toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian', 'svcursorAdd', 'svcursorDel']
+                ['toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian', 'tracecursorAdd', 'tracecursorDel']
             ]);
 
             var gd = getMockGraphInfo(['x'], ['y']);
@@ -346,7 +346,7 @@ describe('ModeBar', function() {
                 ['toImage', 'sendDataToCloud'],
                 ['zoom2d', 'pan2d', 'select2d', 'lasso2d'],
                 ['zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetScale2d'],
-                ['toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian', 'svcursorAdd', 'svcursorDel']
+                ['toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian', 'tracecursorAdd', 'tracecursorDel']
             ]);
 
             var gd = getMockGraphInfo(['x'], ['y']);
@@ -370,7 +370,7 @@ describe('ModeBar', function() {
                 ['toImage', 'sendDataToCloud'],
                 ['zoom2d', 'pan2d', 'select2d', 'lasso2d'],
                 ['zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetScale2d'],
-                ['toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian', 'svcursorAdd', 'svcursorDel']
+                ['toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian', 'tracecursorAdd', 'tracecursorDel']
             ]);
 
             var gd = getMockGraphInfo(['x'], ['y']);
@@ -392,7 +392,7 @@ describe('ModeBar', function() {
         it('creates mode bar (cartesian fixed-axes version)', function() {
             var buttons = getButtons([
                 ['toImage', 'sendDataToCloud'],
-                ['toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian', 'svcursorAdd', 'svcursorDel']
+                ['toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian', 'tracecursorAdd', 'tracecursorDel']
             ]);
 
             var gd = getMockGraphInfo();
@@ -539,7 +539,7 @@ describe('ModeBar', function() {
                 ['toImage', 'sendDataToCloud'],
                 ['zoom3d', 'pan3d', 'orbitRotation', 'tableRotation'],
                 ['resetViews'],
-                ['toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian', 'svcursorAdd', 'svcursorDel']
+                ['toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian', 'tracecursorAdd', 'tracecursorDel']
             ]);
 
             var gd = getMockGraphInfo();
@@ -556,7 +556,7 @@ describe('ModeBar', function() {
                 ['toImage', 'sendDataToCloud'],
                 ['zoom2d', 'pan2d'],
                 ['zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetViews'],
-                ['toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian', 'svcursorAdd', 'svcursorDel']
+                ['toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian', 'tracecursorAdd', 'tracecursorDel']
             ]);
 
             var gd = getMockGraphInfo(['x'], ['y']);
@@ -574,7 +574,7 @@ describe('ModeBar', function() {
                 ['toImage', 'sendDataToCloud'],
                 ['zoom2d', 'pan2d', 'select2d', 'lasso2d'],
                 ['zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetViews'],
-                ['toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian', 'svcursorAdd', 'svcursorDel']
+                ['toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian', 'tracecursorAdd', 'tracecursorDel']
             ]);
 
             var gd = getMockGraphInfo(['x'], ['y']);
@@ -598,7 +598,7 @@ describe('ModeBar', function() {
                 ['toImage', 'sendDataToCloud'],
                 ['zoom2d', 'pan2d', 'select2d', 'lasso2d'],
                 ['zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetScale2d'],
-                ['toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian', 'svcursorAdd', 'svcursorDel']
+                ['toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian', 'tracecursorAdd', 'tracecursorDel']
             ]);
 
             var gd = getMockGraphInfo(['x'], ['y']);
@@ -676,7 +676,7 @@ describe('ModeBar', function() {
             var buttons = getButtons([
                 ['toImage', 'sendDataToCloud'],
                 ['zoom2d', 'pan2d'],
-                ['toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian', 'svcursorAdd', 'svcursorDel']
+                ['toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian', 'tracecursorAdd', 'tracecursorDel']
             ]);
 
             var gd = getMockGraphInfo();

@@ -3,7 +3,6 @@
 var Lib = require('../../lib');
 var Axes = require('../../plots/cartesian/axes');
 var handleArrayContainerDefaults = require('../../plots/array_container_defaults');
-var shapeHelpers = require('../shapes/helpers');
 var isNumeric = require('fast-isnumeric');
 
 var attributes = require('./attributes');
@@ -11,19 +10,19 @@ var attributes = require('./attributes');
 
 module.exports = function supplyLayoutDefaults(layoutIn, layoutOut) {
     var opts = {
-        name: 'svcursors',
+        name: 'tracecursors',
         handleItemDefaults: handleCursorDefaults
     };
 
     handleArrayContainerDefaults(layoutIn, layoutOut, opts);
 };
 
-function handleCursorDefaults(svcursorIn, svcursorOut, fullLayout) {
+function handleCursorDefaults(tracecursorIn, tracecursorOut, fullLayout) {
     // opts = opts || {};
     // itemOpts = itemOpts || {};
 
     function coerce(attr, dflt) {
-        return Lib.coerce(svcursorIn, svcursorOut, attributes, attr, dflt);
+        return Lib.coerce(tracecursorIn, tracecursorOut, attributes, attr, dflt);
     }
 
     coerce('layer', 'above');
@@ -33,7 +32,7 @@ function handleCursorDefaults(svcursorIn, svcursorOut, fullLayout) {
     coerce('line.color');
     coerce('line.width');
 
-    var dfltDash = svcursorIn.cursorMode === 'frozen' ? 'dash' : 'solid';
+    var dfltDash = tracecursorIn.cursorMode === 'frozen' ? 'dash' : 'solid';
     coerce('line.dash', dfltDash);
 
     var gdMock;
@@ -44,10 +43,10 @@ function handleCursorDefaults(svcursorIn, svcursorOut, fullLayout) {
         gdMock = {_fullLayout: fullLayout};
 
         // xref, yref
-        Axes.coerceRef(svcursorIn, svcursorOut, gdMock, axLetter, '', '');
+        Axes.coerceRef(tracecursorIn, tracecursorOut, gdMock, axLetter, '', '');
     }
     var ax;
-    var axRef = svcursorOut.xref;
+    var axRef = tracecursorOut.xref;
 
     gdMock = {_fullLayout: fullLayout};
 
@@ -81,37 +80,37 @@ function handleCursorDefaults(svcursorIn, svcursorOut, fullLayout) {
             // // a pretty unimportant edge case so we could just ignore this.
             // var attr0 = axLetter + '0',
             //     attr1 = axLetter + '1',
-            //     in0 = svcursorIn[attr0],
-            //     in1 = svcursorIn[attr1];
-            // svcursorIn[attr0] = pos2r(svcursorIn[attr0], true);
-            // svcursorIn[attr1] = pos2r(svcursorIn[attr1], true);
+            //     in0 = tracecursorIn[attr0],
+            //     in1 = tracecursorIn[attr1];
+            // tracecursorIn[attr0] = pos2r(tracecursorIn[attr0], true);
+            // tracecursorIn[attr1] = pos2r(tracecursorIn[attr1], true);
 
             // // x0, x1 (and y0, y1)
-            // Axes.coercePosition(svcursorOut, gdMock, coerce, axRef, attr0, dflt0);
-            // Axes.coercePosition(svcursorOut, gdMock, coerce, axRef, attr1, dflt1);
+            // Axes.coercePosition(tracecursorOut, gdMock, coerce, axRef, attr0, dflt0);
+            // Axes.coercePosition(tracecursorOut, gdMock, coerce, axRef, attr1, dflt1);
 
             // // hack part 2
-            // svcursorOut[attr0] = r2pos(svcursorOut[attr0]);
-            // svcursorOut[attr1] = r2pos(svcursorOut[attr1]);
-            // svcursorIn[attr0] = in0;
-            // svcursorIn[attr1] = in1;
+            // tracecursorOut[attr0] = r2pos(tracecursorOut[attr0]);
+            // tracecursorOut[attr1] = r2pos(tracecursorOut[attr1]);
+            // tracecursorIn[attr0] = in0;
+            // tracecursorIn[attr1] = in1;
 
     coerce('x', xDflt);
 
     // x value still can be incorrect
     // For example, if we use "aaa" as x value for "date" x axis
 
-    var xx = svcursorOut.x;
+    var xx = tracecursorOut.x;
 
     if(ax.type === 'date') {
         if(!Lib.isDateTime(xx, ax.calendar)) {
-            svcursorOut.x = xDflt;
+            tracecursorOut.x = xDflt;
         }
     } else {
-        if(!isNumeric(svcursorOut.x)) {
-            svcursorOut.x = xDflt;
+        if(!isNumeric(tracecursorOut.x)) {
+            tracecursorOut.x = xDflt;
         }
     }
 
-    return svcursorOut;
+    return tracecursorOut;
 }

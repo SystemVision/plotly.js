@@ -3261,8 +3261,8 @@ function makePlotFramework(gd) {
         .classed('imagelayer', true);
     fullLayout._shapeUpperLayer = layerAbove.append('g')
         .classed('shapelayer', true);
-    fullLayout._svcursorUpperLayer = layerAbove.append('g')
-        .classed('svcursorlayer', true);
+    fullLayout._tracecursorUpperLayer = layerAbove.append('g')
+        .classed('tracecursorlayer', true);
 
     fullLayout._infolayer = fullLayout._toppaper.append('g').classed('infolayer', true);
     fullLayout._menulayer = fullLayout._toppaper.append('g').classed('menulayer', true);

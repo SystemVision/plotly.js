@@ -1,5 +1,5 @@
 
-var SVCursors = require('@src/components/svcursors');
+var Tracecursors = require('@src/components/tracecursors');
 var selectButton = require('../assets/modebar_button');
 var Lib = require('@src/lib');
 var isNumeric = require('fast-isnumeric');
@@ -72,8 +72,8 @@ var testTrace2 = {
 //     return d3.selectAll('.shapelayer g[data-index="' + index + '"] circle[data-line-point="end-point"]').node();
 // }
 
-function countSvcursorGroups(xAxisRef) {
-    var groupClass = '.svcursor_group';
+function countTracecursorGroups(xAxisRef) {
+    var groupClass = '.tracecursor_group';
     var groups = d3.selectAll(groupClass);
     if(xAxisRef !== undefined) {
         return groups.filter(function() { return d3.select(this).attr('xref') === xAxisRef;}).size();
@@ -82,13 +82,13 @@ function countSvcursorGroups(xAxisRef) {
     }
 }
 
-function ifSvcursorGroupExists(groupIndex) {
+function ifTracecursorGroupExists(groupIndex) {
     var groupId = '#' + 'cursorGroup_' + groupIndex;
     return (d3.selectAll(groupId).size() === 1);
 }
 
 function xAxisLabelText(groupId) {
-    var node = d3.selectAll(groupId + '> .svcursor_axis_label text').node();
+    var node = d3.selectAll(groupId + '> .tracecursor_axis_label text').node();
     if(node) {
         var val = node.textContent;
         return val;
@@ -98,7 +98,7 @@ function xAxisLabelText(groupId) {
 
 function yTraceLabelsText(groupId) {
     var content = [];
-    d3.selectAll(groupId + '> .svcursor_flag').selectAll('text.nums').forEach(function(s) {
+    d3.selectAll(groupId + '> .tracecursor_flag').selectAll('text.nums').forEach(function(s) {
 
         var value = s[0].textContent;
         content.push(value);
@@ -107,11 +107,11 @@ function yTraceLabelsText(groupId) {
 }
 
 function getAddCursorButton(gd) {
-    return selectButton(gd._fullLayout._modeBar, 'svcursorAdd');
+    return selectButton(gd._fullLayout._modeBar, 'tracecursorAdd');
 }
 
 function getDelCursorButton(gd) {
-    return selectButton(gd._fullLayout._modeBar, 'svcursorDel');
+    return selectButton(gd._fullLayout._modeBar, 'tracecursorDel');
 }
 
 function compareValues(val1, val2, mess) {
@@ -158,7 +158,7 @@ function compareAsArray(valStr, arr, mess) {
 
 function testCursorContent(groupInfo) {
     var groupId = '#' + 'cursorGroup_' + groupInfo.groupIndex;
-    expect(ifSvcursorGroupExists(groupInfo.groupIndex)).toBeTruthy();
+    expect(ifTracecursorGroupExists(groupInfo.groupIndex)).toBeTruthy();
 
     var val = xAxisLabelText(groupId);
 
@@ -183,23 +183,23 @@ function addDeleteCursorTest(testInfo, done) {
 
     var addCursor = function() {
         promise = promise.then(function() {
-            expect(ifSvcursorGroupExists(groupInfo1.groupIndex)).toBeFalsy();
-            expect(countSvcursorGroups(groupInfo0.xref)).toEqual(1);
+            expect(ifTracecursorGroupExists(groupInfo1.groupIndex)).toBeFalsy();
+            expect(countTracecursorGroups(groupInfo0.xref)).toEqual(1);
 
             testCursorContent(groupInfo0);
 
 
             getAddCursorButton(gd).click();
 
-            expect(countSvcursorGroups(groupInfo0.xref)).toEqual(2);
+            expect(countTracecursorGroups(groupInfo0.xref)).toEqual(2);
 
             testCursorContent(groupInfo0);
             testCursorContent(groupInfo1);
 
             getDelCursorButton(gd).click();
 
-            expect(ifSvcursorGroupExists(groupInfo1.groupIndex)).toBeFalsy();
-            expect(countSvcursorGroups(groupInfo0.xref)).toEqual(1);
+            expect(ifTracecursorGroupExists(groupInfo1.groupIndex)).toBeFalsy();
+            expect(countTracecursorGroups(groupInfo0.xref)).toEqual(1);
 
             testCursorContent(groupInfo0);
 
@@ -235,15 +235,15 @@ function testXPosition(groupInfo) {
         var parentClass = d3.select(node.parentElement).attr('class');
         var foundPath = false;
 
-        if('svcursor_axis_label' === parentClass) {
+        if('tracecursor_axis_label' === parentClass) {
             coords = getNodeCoords(node, 'n');
             expect(coords.x).toBeWithin(xCoor, 0.01, 'x axis label position');
             foundPath = true;
-        } else if('svcursor_flag' === parentClass) {
+        } else if('tracecursor_flag' === parentClass) {
             coords = getNodeCoords(node, 'w');
             expect(coords.x).toBeWithin(xCoor, 0.01, 'y axis label position');
             foundPath = true;
-        } else if('svcursor_group' === parentClass) {
+        } else if('tracecursor_group' === parentClass) {
             coords = getNodeCoords(node, 's');
             expect(coords.x).toBeWithin(xCoor, 0.01, 'cursor line position');
             foundPath = true;
@@ -253,38 +253,38 @@ function testXPosition(groupInfo) {
     });
 }
 
-describe('Test svcursors defaults:', function() {
+describe('Test tracecursors defaults:', function() {
     'use strict';
 
     function _supply(layoutIn, layoutOut) {
         layoutOut = layoutOut || {};
         layoutOut._has = Plots._hasPlotType.bind(layoutOut);
 
-        SVCursors.supplyLayoutDefaults(layoutIn, layoutOut);
+        Tracecursors.supplyLayoutDefaults(layoutIn, layoutOut);
 
-        return layoutOut.svcursors;
+        return layoutOut.tracecursors;
     }
 
     it('should skip non-array containers', function() {
         [null, undefined, {}, 'str', 0, false, true].forEach(function(cont) {
             var msg = '- ' + JSON.stringify(cont);
-            var layoutIn = { svcursors: cont };
+            var layoutIn = { tracecursors: cont };
             var out = _supply(layoutIn);
 
-            expect(layoutIn.svcursors).toBe(cont, msg);
+            expect(layoutIn.tracecursors).toBe(cont, msg);
             expect(out).toEqual([], msg);
         });
     });
 
     it('should set appropriate value for incorrect x', function() {
         [null, undefined, 'str', false, true].forEach(function(xx) {
-            var svcursors1 =
+            var tracecursors1 =
                 {
                     x: xx
                 };
-            var svcursors2 = Lib.extendDeep({}, svcursors1, {xref: 'x2'});
-            var svcursors3 = Lib.extendDeep({}, svcursors1, {xref: 'x3'});
-            var svcursors4 = Lib.extendDeep({}, svcursors1, {xref: 'x4'});
+            var tracecursors2 = Lib.extendDeep({}, tracecursors1, {xref: 'x2'});
+            var tracecursors3 = Lib.extendDeep({}, tracecursors1, {xref: 'x3'});
+            var tracecursors4 = Lib.extendDeep({}, tracecursors1, {xref: 'x4'});
 
 
             var yAxis = {type: 'linear', range: [0, 10]};
@@ -311,33 +311,33 @@ describe('Test svcursors defaults:', function() {
             Axes.setConvert(fullLayout.yaxis4);
 
             var layoutIn = {
-                svcursors: [svcursors1, svcursors2, svcursors3, svcursors4]
+                tracecursors: [tracecursors1, tracecursors2, tracecursors3, tracecursors4]
             };
 
             _supply(layoutIn, fullLayout);
 
-            var svcursor1Out = fullLayout.svcursors[0];
-            expect(svcursor1Out.x).toBeWithin(10, 0.001);
+            var tracecursor1Out = fullLayout.tracecursors[0];
+            expect(tracecursor1Out.x).toBeWithin(10, 0.001);
 
-            var svcursor2Out = fullLayout.svcursors[1];
-            expect(svcursor2Out.x).toBeWithin(3, 0.001);
+            var tracecursor2Out = fullLayout.tracecursors[1];
+            expect(tracecursor2Out.x).toBeWithin(3, 0.001);
 
-            var svcursor3Out = fullLayout.svcursors[2];
-            expect(svcursor3Out.x).toBe(1149638400000);
+            var tracecursor3Out = fullLayout.tracecursors[2];
+            expect(tracecursor3Out.x).toBe(1149638400000);
 
-            var svcursor4Out = fullLayout.svcursors[3];
-            expect(svcursor4Out.x).toBeWithin(3.5, 0.001);
+            var tracecursor4Out = fullLayout.tracecursors[3];
+            expect(tracecursor4Out.x).toBeWithin(3.5, 0.001);
         });
     });
 });
 
-describe('Test svcursors with', function() {
+describe('Test tracecursors with', function() {
 
     it('single trace on single X axis', function(done) {
         destroyGraphDiv();
         var gd = createGraphDiv();
 
-        var svcursorOptions = [
+        var tracecursorOptions = [
 
             {
                 x: 3.5
@@ -356,7 +356,7 @@ describe('Test svcursors with', function() {
             yaxis: {
                 title: 'Y axis'
             },
-            svcursors: svcursorOptions,
+            tracecursors: tracecursorOptions,
         };
 
         var mock = {
@@ -371,7 +371,7 @@ describe('Test svcursors with', function() {
         };
 
         Plotly.plot(gd, mock).then(function() {
-            expect(countSvcursorGroups())
+            expect(countTracecursorGroups())
                 .toEqual(1);
 
             testCursorContent(groupInfo0);
@@ -381,12 +381,12 @@ describe('Test svcursors with', function() {
     });
 });
 
-describe('Test add/delete svcursors for:', function() {
+describe('Test add/delete tracecursors for:', function() {
     it('single trace on single X axis', function(done) {
         destroyGraphDiv();
         var gd = createGraphDiv();
 
-        var svcursorOptions = [
+        var tracecursorOptions = [
 
             {
                 x: 3.5
@@ -405,7 +405,7 @@ describe('Test add/delete svcursors for:', function() {
             yaxis: {
                 title: 'Y axis'
             },
-            svcursors: svcursorOptions,
+            tracecursors: tracecursorOptions,
         };
 
         var groupInfo0 = {
@@ -435,7 +435,7 @@ describe('Test add/delete svcursors for:', function() {
         destroyGraphDiv();
         var gd = createGraphDiv();
 
-        var svcursorOptions = [
+        var tracecursorOptions = [
 
             {
                 x: 3.5
@@ -456,7 +456,7 @@ describe('Test add/delete svcursors for:', function() {
             yaxis: {
                 title: 'Y axis'
             },
-            svcursors: svcursorOptions,
+            tracecursors: tracecursorOptions,
         };
 
         var groupInfo0 = {
@@ -496,7 +496,7 @@ describe('Test add/delete svcursors for:', function() {
                // line: {shape: 'vhv'},
             };
 
-        var svcursors1 = [
+        var tracecursors1 = [
             {
                 x: '2013-10-05 00:00:00'
             }];
@@ -513,7 +513,7 @@ describe('Test add/delete svcursors for:', function() {
             yaxis: {
                 title: 'Y axis'
             },
-            svcursors: svcursors1,
+            tracecursors: tracecursors1,
 
         };
 
@@ -544,7 +544,7 @@ describe('Test add/delete svcursors for:', function() {
         destroyGraphDiv();
         var gd = createGraphDiv();
 
-        var svcursorOptions4 = [
+        var tracecursorOptions4 = [
             {
                 x: 3.5
             }];
@@ -593,7 +593,7 @@ describe('Test add/delete svcursors for:', function() {
                 position: 0
             },
 
-            svcursors: svcursorOptions4
+            tracecursors: tracecursorOptions4
         };
 
         var groupInfo0 = {
@@ -622,9 +622,9 @@ describe('Test add/delete svcursors for:', function() {
 
 });
 
-describe('Test svcursors with', function() {
+describe('Test tracecursors with', function() {
     var gd;
-    var svcursorOptions = [
+    var tracecursorOptions = [
         {
             x: 2.75
         }];
@@ -640,7 +640,7 @@ describe('Test svcursors with', function() {
         yaxis: {
             title: 'Y axis'
         },
-        svcursors: svcursorOptions,
+        tracecursors: tracecursorOptions,
     };
 
     var groupInfo0 = [];
@@ -693,7 +693,7 @@ describe('Test svcursors with', function() {
         };
 
         Plotly.plot(gd, mock).then(function() {
-            expect(countSvcursorGroups())
+            expect(countTracecursorGroups())
                 .toEqual(1);
 
             testCursorContent(groupInfo0[shape]);
@@ -754,11 +754,11 @@ describe('Test svcursors with', function() {
 
 });
 
-describe('Test svcursors move', function() {
+describe('Test tracecursors move', function() {
 
     var gd;
 
-    var defaultSvcursorOptions = [
+    var defaultTracecursorOptions = [
         {
             x: 0
         }];
@@ -801,7 +801,7 @@ describe('Test svcursors move', function() {
         xPos: 100
     };
 
-    function makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, shape) {
+    function makePlot(tracecursorOptions, xPoints, yPoints, xRange, yRange, shape) {
         gd = createGraphDiv();
 
         var trace = {
@@ -821,7 +821,7 @@ describe('Test svcursors move', function() {
                 width: 500,
                 height: 500,
                 margin: {l: 100, r: 100, t: 100, b: 100, pad: 0},
-                svcursors: svcursorOptions
+                tracecursors: tracecursorOptions
             }
         );
     }
@@ -832,7 +832,7 @@ describe('Test svcursors move', function() {
         });
     }
 
-    function getCursorLine() { return gd.querySelector('.svcursor_group > path'); }
+    function getCursorLine() { return gd.querySelector('.tracecursor_group > path'); }
 
     function checkDragging(findDragger, infos) {
         // 0, 25, 50, 75, 100, 0
@@ -881,9 +881,9 @@ describe('Test svcursors move', function() {
 
         var linearInfos = Lib.extendDeep([], defaultInfos);
 
-        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+        var tracecursorOptions = Lib.extendDeep([], defaultTracecursorOptions);
 
-        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'linear').then(function() {
+        makePlot(tracecursorOptions, xPoints, yPoints, xRange, yRange, 'linear').then(function() {
             return checkDragging(getCursorLine, linearInfos);
         }).catch(failTest)
         .then(done);
@@ -900,9 +900,9 @@ describe('Test svcursors move', function() {
 
         var vhvInfos = Lib.extendDeep([], defaultInfos);
 
-        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+        var tracecursorOptions = Lib.extendDeep([], defaultTracecursorOptions);
 
-        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'vhv').then(function() {
+        makePlot(tracecursorOptions, xPoints, yPoints, xRange, yRange, 'vhv').then(function() {
             return checkDragging(getCursorLine, vhvInfos);
         }).catch(failTest)
         .then(done);
@@ -920,9 +920,9 @@ describe('Test svcursors move', function() {
         hvhInfos[25].flagValues = '50';
         hvhInfos[75].flagValues = '100';
 
-        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+        var tracecursorOptions = Lib.extendDeep([], defaultTracecursorOptions);
 
-        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'hvh').then(function() {
+        makePlot(tracecursorOptions, xPoints, yPoints, xRange, yRange, 'hvh').then(function() {
             return checkDragging(getCursorLine, hvhInfos);
         }).catch(failTest)
         .then(done);
@@ -940,10 +940,10 @@ describe('Test svcursors move', function() {
         vhInfos[25].flagValues = '50';
         vhInfos[75].flagValues = '100';
 
-        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+        var tracecursorOptions = Lib.extendDeep([], defaultTracecursorOptions);
 
 
-        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'vh').then(function() {
+        makePlot(tracecursorOptions, xPoints, yPoints, xRange, yRange, 'vh').then(function() {
             return checkDragging(getCursorLine, vhInfos);
         }).catch(failTest)
         .then(done);
@@ -961,9 +961,9 @@ describe('Test svcursors move', function() {
         hvInfos[25].flagValues = '0';
         hvInfos[75].flagValues = '50';
 
-        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+        var tracecursorOptions = Lib.extendDeep([], defaultTracecursorOptions);
 
-        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'hv').then(function() {
+        makePlot(tracecursorOptions, xPoints, yPoints, xRange, yRange, 'hv').then(function() {
             return checkDragging(getCursorLine, hvInfos);
         }).catch(failTest)
         .then(done);
@@ -977,7 +977,7 @@ describe('Test svcursors move', function() {
         var xRange = ['2017-10-04 00:00:00', '2017-10-05 00:00:00'];
         var yRange = [0, 100];
 
-        var svcursorOptions = [
+        var tracecursorOptions = [
             {
                 x: '2017-10-04 00:00:00'
             }];
@@ -990,7 +990,7 @@ describe('Test svcursors move', function() {
         dateInfos[75].xValue = 'Oct 4, 2017, 18:00';
         dateInfos[100].xValue = 'Oct 5, 2017';
 
-        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'linear')
+        makePlot(tracecursorOptions, xPoints, yPoints, xRange, yRange, 'linear')
         .then(function() {
             return checkDragging(getCursorLine, dateInfos);
         })
@@ -1012,7 +1012,7 @@ describe('Test svcursors move', function() {
         var xRange = [0, 10000];
         var yRange = [0, 4];
 
-        var svcursorOptions = [
+        var tracecursorOptions = [
             {
                 x: 0
             }];
@@ -1031,7 +1031,7 @@ describe('Test svcursors move', function() {
         logInfos[75].flagValues = '' + Math.log10(7500);
         logInfos[100].flagValues = '4';
 
-        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'linear')
+        makePlot(tracecursorOptions, xPoints, yPoints, xRange, yRange, 'linear')
         .then(function() {
             return checkDragging(getCursorLine, logInfos);
         })
@@ -1048,9 +1048,9 @@ describe('Test svcursors move', function() {
         var xRange = [0, 100];
         var yRange = [0, 100];
 
-        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+        var tracecursorOptions = Lib.extendDeep([], defaultTracecursorOptions);
 
-        svcursorOptions[0].x = 20;
+        tracecursorOptions[0].x = 20;
 
         var info = {
             groupIndex: 0,
@@ -1059,7 +1059,7 @@ describe('Test svcursors move', function() {
             xPos: 20
         };
 
-        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'linear')
+        makePlot(tracecursorOptions, xPoints, yPoints, xRange, yRange, 'linear')
         .then(function() {
             testXPosition(info);
         })
@@ -1068,13 +1068,13 @@ describe('Test svcursors move', function() {
     });
 });
 
-describe('Test svcursors subplots', function() {
+describe('Test tracecursors subplots', function() {
 
     it('for 2 traces in two subpolots', function(done) {
         destroyGraphDiv();
         var gd = createGraphDiv();
 
-        var svcursorOptions1 = [
+        var tracecursorOptions1 = [
             {
                 x: 3.5
             },
@@ -1134,7 +1134,7 @@ describe('Test svcursors subplots', function() {
                 side: 'left',
             },
 
-            svcursors: svcursorOptions1
+            tracecursors: tracecursorOptions1
         };
 
         var groupInfo0 = {
@@ -1152,11 +1152,11 @@ describe('Test svcursors subplots', function() {
         };
 
         Plotly.plot(gd, [trace1, trace2, trace3, trace4], layout).then(function() {
-            expect(countSvcursorGroups())
+            expect(countTracecursorGroups())
                 .toEqual(2);
-            expect(countSvcursorGroups('x'))
+            expect(countTracecursorGroups('x'))
                 .toEqual(1);
-            expect(countSvcursorGroups('x2'))
+            expect(countTracecursorGroups('x2'))
                 .toEqual(1);
 
             testCursorContent(groupInfo0);
@@ -1168,10 +1168,10 @@ describe('Test svcursors subplots', function() {
 
 });
 
-describe('Test svcursors zoom with', function() {
+describe('Test tracecursors zoom with', function() {
     var gd;
 
-    var defaultSvcursorOptions = [
+    var defaultTracecursorOptions = [
         {
             x: 20
         }];
@@ -1218,7 +1218,7 @@ describe('Test svcursors zoom with', function() {
         xPos: 100
     };
 
-    function makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, shape) {
+    function makePlot(tracecursorOptions, xPoints, yPoints, xRange, yRange, shape) {
 
         gd = createGraphDiv();
 
@@ -1239,7 +1239,7 @@ describe('Test svcursors zoom with', function() {
                 width: 500,
                 height: 500,
                 margin: {l: 100, r: 100, t: 100, b: 100, pad: 0},
-                svcursors: svcursorOptions,
+                tracecursors: tracecursorOptions,
                 dragmode: 'zoom'
             }
             );
@@ -1299,16 +1299,16 @@ describe('Test svcursors zoom with', function() {
         var xRange = [0, 100];
         var yRange = [0, 100];
 
-        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+        var tracecursorOptions = Lib.extendDeep([], defaultTracecursorOptions);
 
         var groupInfo = {
             groupIndex: 0,
-            xValue: svcursorOptions[0].x,
+            xValue: tracecursorOptions[0].x,
             flagValues: '20',
             xPos: 50
         };
 
-        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'linear').then(function() {
+        makePlot(tracecursorOptions, xPoints, yPoints, xRange, yRange, 'linear').then(function() {
             doZoom(groupInfo).then(function() {
                 testCursorContent(groupInfo);
                 done();
@@ -1325,16 +1325,16 @@ describe('Test svcursors zoom with', function() {
         var yRange = [0, 100];
 
 
-        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+        var tracecursorOptions = Lib.extendDeep([], defaultTracecursorOptions);
 
         var groupInfo = {
             groupIndex: 0,
-            xValue: svcursorOptions[0].x,
+            xValue: tracecursorOptions[0].x,
             flagValues: '20',
             xPos: -150
         };
 
-        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'linear').then(function() {
+        makePlot(tracecursorOptions, xPoints, yPoints, xRange, yRange, 'linear').then(function() {
             doZoom(groupInfo, 40).then(function() {
                 testXPosition(groupInfo);
                 done();
@@ -1351,17 +1351,17 @@ describe('Test svcursors zoom with', function() {
         var xRange = [0, 100];
         var yRange = [0, 100];
 
-        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+        var tracecursorOptions = Lib.extendDeep([], defaultTracecursorOptions);
 
         var groupInfo = {
             groupIndex: 0,
-            xValue: svcursorOptions[0].x,
+            xValue: tracecursorOptions[0].x,
             flagValues: '25',
             xPos: 50
         };
 
 
-        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'vhv').then(function() {
+        makePlot(tracecursorOptions, xPoints, yPoints, xRange, yRange, 'vhv').then(function() {
             doZoom(groupInfo).then(function() {
                 testCursorContent(groupInfo);
                 done();
@@ -1378,17 +1378,17 @@ describe('Test svcursors zoom with', function() {
         var xRange = [0, 100];
         var yRange = [0, 100];
 
-        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+        var tracecursorOptions = Lib.extendDeep([], defaultTracecursorOptions);
 
         var groupInfo = {
             groupIndex: 0,
-            xValue: svcursorOptions[0].x,
+            xValue: tracecursorOptions[0].x,
             flagValues: '25',
             xPos: -150
         };
 
 
-        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'vhv').then(function() {
+        makePlot(tracecursorOptions, xPoints, yPoints, xRange, yRange, 'vhv').then(function() {
             doZoom(groupInfo, 40).then(function() {
                 testXPosition(groupInfo);
                 done();
@@ -1405,15 +1405,15 @@ describe('Test svcursors zoom with', function() {
         var xRange = [0, 100];
         var yRange = [0, 100];
 
-        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+        var tracecursorOptions = Lib.extendDeep([], defaultTracecursorOptions);
         var groupInfo = {
             groupIndex: 0,
-            xValue: svcursorOptions[0].x,
+            xValue: tracecursorOptions[0].x,
             flagValues: '0',
             xPos: 50
         };
 
-        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'hvh').then(function() {
+        makePlot(tracecursorOptions, xPoints, yPoints, xRange, yRange, 'hvh').then(function() {
             doZoom(groupInfo).then(function() {
                 testCursorContent(groupInfo);
                 done();
@@ -1430,15 +1430,15 @@ describe('Test svcursors zoom with', function() {
         var xRange = [0, 100];
         var yRange = [0, 100];
 
-        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+        var tracecursorOptions = Lib.extendDeep([], defaultTracecursorOptions);
         var groupInfo = {
             groupIndex: 0,
-            xValue: svcursorOptions[0].x,
+            xValue: tracecursorOptions[0].x,
             flagValues: '0',
             xPos: -150
         };
 
-        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'hvh').then(function() {
+        makePlot(tracecursorOptions, xPoints, yPoints, xRange, yRange, 'hvh').then(function() {
             doZoom(groupInfo, 40).then(function() {
                 testXPosition(groupInfo);
                 done();
@@ -1455,15 +1455,15 @@ describe('Test svcursors zoom with', function() {
         var xRange = [0, 100];
         var yRange = [0, 100];
 
-        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+        var tracecursorOptions = Lib.extendDeep([], defaultTracecursorOptions);
         var groupInfo = {
             groupIndex: 0,
-            xValue: svcursorOptions[0].x,
+            xValue: tracecursorOptions[0].x,
             flagValues: '0',
             xPos: 50
         };
 
-        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'hv').then(function() {
+        makePlot(tracecursorOptions, xPoints, yPoints, xRange, yRange, 'hv').then(function() {
             doZoom(groupInfo).then(function() {
                 testCursorContent(groupInfo);
                 done();
@@ -1480,15 +1480,15 @@ describe('Test svcursors zoom with', function() {
         var xRange = [0, 100];
         var yRange = [0, 100];
 
-        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+        var tracecursorOptions = Lib.extendDeep([], defaultTracecursorOptions);
         var groupInfo = {
             groupIndex: 0,
-            xValue: svcursorOptions[0].x,
+            xValue: tracecursorOptions[0].x,
             flagValues: '0',
             xPos: -150
         };
 
-        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'hv').then(function() {
+        makePlot(tracecursorOptions, xPoints, yPoints, xRange, yRange, 'hv').then(function() {
             doZoom(groupInfo, 40).then(function() {
                 testXPosition(groupInfo);
                 done();
@@ -1505,15 +1505,15 @@ describe('Test svcursors zoom with', function() {
         var xRange = [0, 100];
         var yRange = [0, 100];
 
-        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+        var tracecursorOptions = Lib.extendDeep([], defaultTracecursorOptions);
         var groupInfo = {
             groupIndex: 0,
-            xValue: svcursorOptions[0].x,
+            xValue: tracecursorOptions[0].x,
             flagValues: '50',
             xPos: 50
         };
 
-        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'vh').then(function() {
+        makePlot(tracecursorOptions, xPoints, yPoints, xRange, yRange, 'vh').then(function() {
             doZoom(groupInfo).then(function() {
                 testCursorContent(groupInfo);
                 done();
@@ -1530,15 +1530,15 @@ describe('Test svcursors zoom with', function() {
         var xRange = [0, 100];
         var yRange = [0, 100];
 
-        var svcursorOptions = Lib.extendDeep([], defaultSvcursorOptions);
+        var tracecursorOptions = Lib.extendDeep([], defaultTracecursorOptions);
         var groupInfo = {
             groupIndex: 0,
-            xValue: svcursorOptions[0].x,
+            xValue: tracecursorOptions[0].x,
             flagValues: '50',
             xPos: -150
         };
 
-        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'vh').then(function() {
+        makePlot(tracecursorOptions, xPoints, yPoints, xRange, yRange, 'vh').then(function() {
             doZoom(groupInfo, 40).then(function() {
                 testXPosition(groupInfo);
                 done();
@@ -1555,7 +1555,7 @@ describe('Test svcursors zoom with', function() {
         var xRange = ['2017-10-04 00:00:00', '2017-10-05 00:00:00'];
         var yRange = [0, 100];
 
-        var svcursorOptions = [
+        var tracecursorOptions = [
             {
                 x: '2017-10-04 06:00:00'
             }];
@@ -1568,7 +1568,7 @@ describe('Test svcursors zoom with', function() {
             xPos: 50
         };
 
-        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'linear').then(function() {
+        makePlot(tracecursorOptions, xPoints, yPoints, xRange, yRange, 'linear').then(function() {
             doDataZoom(groupInfo).then(function() {
                 testCursorContent(groupInfo);
                 done();
@@ -1585,7 +1585,7 @@ describe('Test svcursors zoom with', function() {
         var xRange = ['2017-10-04 00:00:00', '2017-10-05 00:00:00'];
         var yRange = [0, 100];
 
-        var svcursorOptions = [
+        var tracecursorOptions = [
             {
                 x: '2017-10-04 00:00:00'
             }];
@@ -1598,7 +1598,7 @@ describe('Test svcursors zoom with', function() {
             xPos: -275
         };
 
-        makePlot(svcursorOptions, xPoints, yPoints, xRange, yRange, 'hv').then(function() {
+        makePlot(tracecursorOptions, xPoints, yPoints, xRange, yRange, 'hv').then(function() {
             doDataZoom(groupInfo, 40).then(function() {
                 testXPosition(groupInfo);
                 done();

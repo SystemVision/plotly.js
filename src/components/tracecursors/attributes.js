@@ -15,7 +15,7 @@ var extendFlat = require('../../lib/extend').extendFlat;
 var cartesianConstants = require('../../plots/cartesian/constants');
 
 module.exports = {
-    _isLinkedToArray: 'svcursor',
+    _isLinkedToArray: 'tracecursor',
 
     type: {
         valType: 'enumerated',
@@ -45,7 +45,7 @@ module.exports = {
         dflt: 'above',
         role: 'info',
         editType: 'arraydraw',
-        description: 'Specifies whether svcursors are drawn below or above traces.'
+        description: 'Specifies whether tracecursors are drawn below or above traces.'
     },
 
     xref: {
@@ -55,7 +55,7 @@ module.exports = {
         role: 'info',
         editType: 'arraydraw',
         description: [
-            'Sets the svcursor\'s x coordinate axis (for example, \'x\' or \'x2\').'
+            'Sets the tracecursor\'s x coordinate axis (for example, \'x\' or \'x2\').'
         ].join(' ')
     },
 
@@ -64,7 +64,7 @@ module.exports = {
         role: 'info',
         editType: 'calcIfAutorange+arraydraw',
         description: [
-            'Sets the svcursor\'s starting x position.',
+            'Sets the tracecursor\'s starting x position.',
             'See `type` for more info.'
         ].join(' ')
     },
@@ -75,7 +75,7 @@ module.exports = {
         role: 'info',
         editType: 'arraydraw',
         description: [
-            'Sets the svcursor\'s y coordinate axis (for example, \'y\' or \'y2\').'
+            'Sets the tracecursor\'s y coordinate axis (for example, \'y\' or \'y2\').'
         ].join(' ')
     },
 
