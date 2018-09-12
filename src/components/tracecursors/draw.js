@@ -149,17 +149,6 @@ function fixXValue(x, cursorXAxis) {
     return xval;
 }
 
-function setClipPath(tracecursorPath, gd, tracecursorOptions) {
-
-    var subplots = getCursorSubplots(gd, tracecursorOptions);
-    var clipAxes = (subplots.length > 0) ? subplots[0] : 'xy';
-
-    tracecursorPath.call(Drawing.setClipUrl, clipAxes ?
-      ('clip' + gd._fullLayout._uid + clipAxes) :
-      null
-    );
-}
-
 function drawOne(gd, index) {
     // remove the existing tracecursor if there is one.
     // because indices can change, we need to look in all tracecursor layers
@@ -239,8 +228,6 @@ function drawOne(gd, index) {
         //       console.log('left click')
         //     }
         //   });
-
-        setClipPath(path, gd, tracecursorOptions);
 
         createLabels(gd, tracecursorOptions, cursorGroup, null);
 
@@ -357,7 +344,6 @@ function setupDragElement(gd, tracecursorPath, tracecursorOptions, index, cursor
             return;
         }
         setCursor(tracecursorPath);
-        setClipPath(tracecursorPath, gd, tracecursorOptions);
 
         Registry.call('relayout', gd, update).then(function() {
             var eventData = {
