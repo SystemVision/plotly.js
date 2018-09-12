@@ -124,7 +124,7 @@ function compareValues(val1, val2, mess) {
 
 function compareAsArray(valStr, arr, mess) {
 
-    var vv = valStr.split(',');
+    var vv = valStr.split(';');
 
     for(var i = 0; i < vv.length; i++) {
         var val1 = vv[i];
@@ -652,13 +652,13 @@ describe('Test add/delete tracecursors for:', function() {
         var groupInfo0 = {
             groupIndex: 0,
             xValue: '3.5',
-            flagValues: '7.249901,1.249901,1.249901,7.249901'
+            flagValues: '7.249901;1.249901;1.249901;7.249901'
         };
 
         var groupInfo1 = {
             groupIndex: 1,
             xValue: '16',
-            flagValues: '11.25,1.5,1.5,11.25'
+            flagValues: '11.25;1.5;1.5;11.25'
         };
 
         var testInfo = {
@@ -1051,6 +1051,41 @@ describe('Test tracecursors move', function() {
         .then(done);
     });
 
+    it('with date X and Y axes', function(done) {
+        destroyGraphDiv();
+
+        var xPoints = ['2017-10-04 00:00:00', '2017-10-04 12:00:00', '2017-10-05 00:00:00'];
+        var yPoints = ['2017-10-04 00:00:00', '2017-10-04 12:00:00', '2017-10-05 00:00:00'];
+        var xRange = ['2017-10-04 00:00:00', '2017-10-05 00:00:00'];
+        var yRange = ['2017-10-04 00:00:00', '2017-10-05 00:00:00'];
+
+        var tracecursorOptions = [
+            {
+                x: '2017-10-04 00:00:00'
+            }];
+
+        var dateInfos = Lib.extendDeep({}, defaultInfos);
+
+        dateInfos[0].xValue = 'Oct 4, 2017';
+        dateInfos[25].xValue = 'Oct 4, 2017, 06:00';
+        dateInfos[50].xValue = 'Oct 4, 2017, 12:00';
+        dateInfos[75].xValue = 'Oct 4, 2017, 18:00';
+        dateInfos[100].xValue = 'Oct 5, 2017';
+
+        dateInfos[0].flagValues = 'Oct 4, 2017';
+        dateInfos[25].flagValues = 'Oct 4, 2017, 06:00';
+        dateInfos[50].flagValues = 'Oct 4, 2017, 12:00';
+        dateInfos[75].flagValues = 'Oct 4, 2017, 18:00';
+        dateInfos[100].flagValues = 'Oct 5, 2017';
+
+        makePlot(tracecursorOptions, xPoints, yPoints, xRange, yRange, 'linear')
+        .then(function() {
+            return checkDragging(getCursorLine, dateInfos);
+        })
+        .catch(failTest)
+        .then(done);
+    });
+
     it('with log X axis', function(done) {
         destroyGraphDiv();
 
@@ -1216,14 +1251,14 @@ describe('Test tracecursors subplots', function() {
         var groupInfo0 = {
             groupIndex: 0,
             xValue: '3.5',
-            flagValues: '7.25,1.25',
+            flagValues: '7.25;1.25',
             xref: 'x'
         };
 
         var groupInfo1 = {
             groupIndex: 1,
             xValue: '4.5',
-            flagValues: '1.75,7.75',
+            flagValues: '1.75;7.75',
             xref: 'x2'
         };
 

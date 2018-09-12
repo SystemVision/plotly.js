@@ -37,18 +37,13 @@ function handleCursorDefaults(tracecursorIn, tracecursorOut, fullLayout) {
 
     var gdMock;
     // positioning
-    var axLetters = ['x', 'y'];
-    for(var i = 0; i < 2; i++) {
-        var axLetter = axLetters[i];
-        gdMock = {_fullLayout: fullLayout};
+    gdMock = {_fullLayout: fullLayout};
 
-        // xref, yref
-        Axes.coerceRef(tracecursorIn, tracecursorOut, gdMock, axLetter, '', '');
-    }
+    // xref
+    Axes.coerceRef(tracecursorIn, tracecursorOut, gdMock, 'x', '', '');
+
     var ax;
     var axRef = tracecursorOut.xref;
-
-    gdMock = {_fullLayout: fullLayout};
 
     ax = Axes.getFromId(gdMock, axRef);
 

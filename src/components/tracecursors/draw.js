@@ -151,7 +151,8 @@ function fixXValue(x, cursorXAxis) {
 
 function setClipPath(tracecursorPath, gd, tracecursorOptions) {
 
-    var clipAxes = (tracecursorOptions.xref + tracecursorOptions.yref).replace(/paper/g, '');
+    var subplots = getCursorSubplots(gd, tracecursorOptions);
+    var clipAxes = (subplots.length > 0) ? subplots[0] : 'xy';
 
     tracecursorPath.call(Drawing.setClipUrl, clipAxes ?
       ('clip' + gd._fullLayout._uid + clipAxes) :
@@ -371,10 +372,7 @@ function setupDragElement(gd, tracecursorPath, tracecursorOptions, index, cursor
             // }
 
             gd.emit('plotly_stopcursordrag', eventData);
-            // var fixYValues = [];
-            // fixYValues.singleTrace = '234';
-            // fixYValues.secondTrace = 'QQQQQQQQQQQQQQQQQQQQQQQQQQQQQ';
-            // updateFlags(gd, index, fixYValues);
+
         });
     }
 
@@ -401,10 +399,10 @@ function setupDragElement(gd, tracecursorPath, tracecursorOptions, index, cursor
 
 function getConvertFunction(gd, tracecursorOptions) {
 
-    var xa = Axes.getFromId(gd, tracecursorOptions.xref),
-        ya = Axes.getFromId(gd, tracecursorOptions.yref);
-    var x2r, x2p, y2r, y2p;
-    var p2x, p2y;
+    var xa = Axes.getFromId(gd, tracecursorOptions.xref);
+
+    var x2r, x2p;
+    var p2x;
 
 
     if(xa) {
@@ -414,24 +412,13 @@ function getConvertFunction(gd, tracecursorOptions) {
         p2x = shapeHelpers.getPixelToData(gd, xa);
     }
 
-    if(ya) {
-        y2r = shapeHelpers.shapePositionToRange(ya);
-        y2p = function(v) { return ya._offset + ya.r2p(y2r(v, true)); };
-
-        p2y = shapeHelpers.getPixelToData(gd, ya);
-    }
-
     if(xa && xa.type === 'date') {
         x2p = shapeHelpers.decodeDate(x2p);
     }
-    if(ya && ya.type === 'date') {
-        y2p = shapeHelpers.decodeDate(y2p);
-    }
+
     var convFunc = {
         x2p: x2p,
-        y2p: y2p,
-        p2x: p2x,
-        p2y: p2y
+        p2x: p2x
     };
 
     return convFunc;
@@ -714,12 +701,6 @@ function initCursorData(gd, subplot, tracecursorOptions, fixYValues) {
         yaArray[i] = _subplot.yaxis;
     }
 
-    // /////////////////////
-
-    // var hoverdistance = fullLayout.hoverdistance === -1 ? Infinity : fullLayout.hoverdistance;
-    // var spikedistance = fullLayout.spikedistance === -1 ? Infinity : fullLayout.spikedistance;
-    // the pixel distance to beat as a matching point
-    // in 'x' or 'y' mode this resets for each trace
     var distance = 10000;
 
     var hoverData = [],
@@ -803,14 +784,9 @@ function initCursorData(gd, subplot, tracecursorOptions, fixYValues) {
         var traceYAxis = pointData.ya;
 
         var xpx = traceXAxis.c2p(xval);
-        // var ypx = traceYAxis.c2p(yval);
-        // var minRad = (trace.mode.indexOf('markers') !== -1) ? 3 : 0.5;
 
         // find closest point by x
         var distfn = function(di) {
-            // dx and dy are used in compare modes - here we want to always
-            // prioritize the closest data point, at least as long as markers are
-            // the same size or nonexistent, but still try to prioritize small markers too.
             var rad = Math.max(3, di.mrc || 0);
             var kink = 1 - 1 / rad;
             var dxRaw = Math.abs(traceXAxis.c2p(di.x) - xpx);

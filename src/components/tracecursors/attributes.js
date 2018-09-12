@@ -17,14 +17,24 @@ var cartesianConstants = require('../../plots/cartesian/constants');
 module.exports = {
     _isLinkedToArray: 'tracecursor',
 
-    type: {
-        valType: 'enumerated',
-        values: ['line'],
-        dflt: 'line',
+    x: {
+        valType: 'any',
         role: 'info',
         editType: 'calcIfAutorange+arraydraw',
         description: [
-            'Specifies the cursor type to be drawn.'
+            'Sets the tracecursor\'s starting x position.',
+            'See `type` for more info.'
+        ].join(' ')
+    },
+
+    xref: {
+        valType: 'enumerated',
+        values: [cartesianConstants.idRegex.x.toString()],
+        dflt: 'x',
+        role: 'info',
+        editType: 'arraydraw',
+        description: [
+            'Sets the tracecursor\'s x coordinate axis (for example, \'x\' or \'x2\').'
         ].join(' ')
     },
 
@@ -39,52 +49,33 @@ module.exports = {
         ].join(' ')
     },
 
-    layer: {
-        valType: 'enumerated',
-        values: ['above'],
-        dflt: 'above',
-        role: 'info',
-        editType: 'arraydraw',
-        description: 'Specifies whether tracecursors are drawn below or above traces.'
-    },
-
-    xref: {
-        valType: 'enumerated',
-        values: [cartesianConstants.idRegex.x.toString()],
-        dflt: 'x',
-        role: 'info',
-        editType: 'arraydraw',
-        description: [
-            'Sets the tracecursor\'s x coordinate axis (for example, \'x\' or \'x2\').'
-        ].join(' ')
-    },
-
-    x: {
-        valType: 'any',
-        role: 'info',
-        editType: 'calcIfAutorange+arraydraw',
-        description: [
-            'Sets the tracecursor\'s starting x position.',
-            'See `type` for more info.'
-        ].join(' ')
-    },
-    yref: {
-        valType: 'enumerated',
-        values: [cartesianConstants.idRegex.y.toString()],
-        dflt: 'y',
-        role: 'info',
-        editType: 'arraydraw',
-        description: [
-            'Sets the tracecursor\'s y coordinate axis (for example, \'y\' or \'y2\').'
-        ].join(' ')
-    },
-
     line: {
         color: extendFlat({}, scatterLineAttrs.color, {editType: 'arraydraw'}),
         width: extendFlat({}, scatterLineAttrs.width, {editType: 'calcIfAutorange+arraydraw'}),
         dash: extendFlat({}, dash, {editType: 'arraydraw'}),
         role: 'info',
         editType: 'calcIfAutorange+arraydraw'
+    },
+
+    // hidden attributes
+    layer: {
+        valType: 'enumerated',
+        values: ['above'],
+        dflt: 'above',
+        role: 'info',
+        editType: 'arraydraw',
+        description: 'Specifies whether tracecursors are drawn above traces.'
+    },
+
+    type: {
+        valType: 'enumerated',
+        values: ['line'],
+        dflt: 'line',
+        role: 'info',
+        editType: 'calcIfAutorange+arraydraw',
+        description: [
+            'Specifies the cursor type to be drawn.'
+        ].join(' ')
     },
 
     editType: 'arraydraw'
