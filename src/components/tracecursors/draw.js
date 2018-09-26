@@ -353,10 +353,6 @@ function setupDragElement(gd, tracecursorPath, tracecursorOptions, index, cursor
                 event: d3.event
             };
 
-            // if(subplotId) {
-            //     eventData.subplotId = subplotId;
-            // }
-
             gd.emit('plotly_stopcursordrag', eventData);
 
         });
