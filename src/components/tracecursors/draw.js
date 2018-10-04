@@ -219,19 +219,10 @@ function drawOne(gd, index) {
             .call(Color.stroke, lineColor)
             .call(Color.fill, tracecursorOptions.fillcolor)
             .call(Drawing.dashLine, tracecursorOptions.line.dash, tracecursorOptions.line.width);
-        // SystemVision: To support context menu
-        // .on("contextmenu", function (d, i) {
-        //     d3.event.preventDefault();
-        //     if(d3.event.button === 2) {
-        //       console.log('right click')
-        //     } else {
-        //       console.log('left click')
-        //     }
-        //   });
 
         createLabels(gd, tracecursorOptions, cursorGroup, null);
 
-        // SystemVision: Always support dragging
+        // Always support dragging
         if(tracecursorOptions.cursorMode !== 'frozen') {
             setupDragElement(gd, path, tracecursorOptions, index, cursorGroup);
         }
@@ -732,13 +723,13 @@ function initCursorData(gd, subplot, tracecursorOptions, fixYValues) {
             text: undefined
         };
 
-        // SystemVision: If we use "date" in X axis, let be sure that we use x (as a time) in ms
+        // If we use "date" in X axis, let be sure that we use x (as a time) in ms
         // So transfrom it from "2013-11-10 22:23:00" into 1384122180000, for example
 
         var result = getXValueAsNumber(tracecursorOptions.x, cursorXAxis);
         var xValue = result.xVal;
 
-        // SystemVision: We do not use yval to find hoverPoints, so it can be set to arbitrary value
+        // We do not use yval to find hoverPoints, so it can be set to arbitrary value
         var yValue = 0;
 
         // Now if there is range to look in, find the points to hover.

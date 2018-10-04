@@ -60,36 +60,6 @@ function handleCursorDefaults(tracecursorIn, tracecursorOut, fullLayout) {
         xDflt = ax.c2d(xDflt, 0, ax.calendar);
     }
 
-        // if(axRef !== 'paper') {
-        //     ax = Axes.getFromId(gdMock, axRef);
-        //     //r2pos = helpers.rangeToShapePosition(ax);
-        //     pos2r = helpers.shapePositionToRange(ax);
-        // }
-        // else {
-        //     pos2r = r2pos = Lib.identity;
-        // }
-
-            // // hack until V2.0 when log has regular range behavior - make it look like other
-            // // ranges to send to coerce, then put it back after
-            // // this is all to give reasonable default position behavior on log axes, which is
-            // // a pretty unimportant edge case so we could just ignore this.
-            // var attr0 = axLetter + '0',
-            //     attr1 = axLetter + '1',
-            //     in0 = tracecursorIn[attr0],
-            //     in1 = tracecursorIn[attr1];
-            // tracecursorIn[attr0] = pos2r(tracecursorIn[attr0], true);
-            // tracecursorIn[attr1] = pos2r(tracecursorIn[attr1], true);
-
-            // // x0, x1 (and y0, y1)
-            // Axes.coercePosition(tracecursorOut, gdMock, coerce, axRef, attr0, dflt0);
-            // Axes.coercePosition(tracecursorOut, gdMock, coerce, axRef, attr1, dflt1);
-
-            // // hack part 2
-            // tracecursorOut[attr0] = r2pos(tracecursorOut[attr0]);
-            // tracecursorOut[attr1] = r2pos(tracecursorOut[attr1]);
-            // tracecursorIn[attr0] = in0;
-            // tracecursorIn[attr1] = in1;
-
     coerce('x', xDflt);
 
     // x value still can be incorrect
