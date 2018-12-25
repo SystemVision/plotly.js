@@ -15,6 +15,8 @@ var Registry = require('../../registry');
 
 var Lib = require('../../lib');
 
+var d3 = require('d3');
+
 module.exports = {
     add: addTraceCursor,
     delete: delTraceCursor
@@ -66,7 +68,24 @@ function addTraceCursor(gd) {
         tracecursors: newTraceCursorsOut
     };
 
-    Registry.call('relayout', gd, update);
+    Registry.call('relayout', gd, update).then(function() {
+
+        for(var i = 0; i < gd._fullLayout.tracecursors.length; i++) {
+
+            var index = i;
+
+            var tracecursorOptions = gd._fullLayout.tracecursors[index];
+            var eventData = {
+                index: index,
+                tracecursor: tracecursorOptions._input,
+                fullTracecursor: tracecursorOptions,
+                event: d3.event
+            };
+
+            gd.emit('plotly_stopcursordrag', eventData);
+        }
+
+    });
 
 }
 
@@ -88,5 +107,22 @@ function delTraceCursor(gd) {
         };
     }
 
-    Registry.call('relayout', gd, update);
+    Registry.call('relayout', gd, update).then(function() {
+
+        for(var i = 0; i < gd._fullLayout.tracecursors.length; i++) {
+
+            var index = i;
+
+            var tracecursorOptions = gd._fullLayout.tracecursors[index];
+            var eventData = {
+                index: index,
+                tracecursor: tracecursorOptions._input,
+                fullTracecursor: tracecursorOptions,
+                event: d3.event
+            };
+
+            gd.emit('plotly_stopcursordrag', eventData);
+        }
+
+    });
 }

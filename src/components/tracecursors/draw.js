@@ -56,7 +56,8 @@ var supportedAxisTypes = ['linear', 'date', 'log', 'category'];
 module.exports = {
     draw: draw,
     drawOne: drawOne,
-    updateTraceCursor: updateFlags
+    updateTraceCursor: updateFlags,
+    getTracecursors: getTracecursors
 };
 
 function draw(gd) {
@@ -87,6 +88,11 @@ function updateFlags(gd, index, yValues) {
     var selector = '#cursorGroup_' + index;
     var cursorGroup = d3.select(selector);
     createLabels(gd, tracecursorOptions, cursorGroup, yValues);
+}
+
+function getTracecursors(gd) {
+    var tracecursors = gd._fullLayout.tracecursors;
+    return tracecursors;
 }
 
 function getXValueAsNumber(xVal, cursorXAxis) {
@@ -271,11 +277,19 @@ function cleanPoint(d) {
         d.xVal = d.xa.c2d(d.xLabelVal);
     }
     if(d.yLabelVal !== undefined) {
-        d.yLabel = ('yLabel' in d) ? d.yLabel : Axes.hoverLabelText(d.ya, d.yLabelVal);
+        d.yLabel = ('yLabel' in d) ? d.yLabel : getYLabelText(d);
         d.yVal = d.ya.c2d(d.yLabelVal);
     }
 
     return d;
+}
+
+function getYLabelText(d) {
+
+    if(isNumeric(d.yLabelVal)) {
+        return Axes.hoverLabelText(d.ya, d.yLabelVal);
+    }
+    return d.yLabelVal;
 }
 
 
@@ -735,7 +749,12 @@ function initCursorData(gd, subplot, tracecursorOptions, fixYValues) {
         // Now if there is range to look in, find the points to hover.
         var fixYValue = null;
         if(fixYValues !== null && fixYValues !== undefined) {
-            fixYValue = fixYValues[trace.name];
+            var yValueForId = fixYValues[trace.traceId];
+            if(yValueForId) {
+                fixYValue = yValueForId;
+            } else {
+                fixYValue = fixYValues[trace.name];
+            }
         }
 
         var newPoints = hoverPoints(pointData, xValue, yValue, fixYValue);
@@ -767,31 +786,37 @@ function initCursorData(gd, subplot, tracecursorOptions, fixYValues) {
             return d;
         };
 
-        var x0, y0, x1, y1, xx, yy;
+        var x0, y0, x1, y1, xx, yy, y0Val, y1Val, yValue;
 
         function getIntersectionPoint() {
             var lineShape = trace.line.shape;
 
             if(xx === x0) {
+                yValue = y0Val ? y0Val : y0;
                 return y0;
             }
 
             if(xx === x1) {
+                yValue = y1Val ? y1Val : y1;
                 return y1;
             }
 
             if(lineShape === 'hv') {
                 if(xx < x1) {
+                    yValue = y0Val ? y0Val : y0;
                     return y0;
                 } else {
+                    yValue = y1Val ? y1Val : y1;
                     return y1;
                 }
             }
 
             if(lineShape === 'vh') {
                 if(xx > x0) {
+                    yValue = y1Val ? y1Val : y1;
                     return y1;
                 } else {
+                    yValue = y0Val ? y0Val : y0;
                     return y0;
                 }
             }
@@ -841,6 +866,7 @@ function initCursorData(gd, subplot, tracecursorOptions, fixYValues) {
 
                 var leftPoint = pointData.index;
                 var rightPoint = pointData.index;
+                intersect = true;
                 if(pointData.distance < 0.0001) {
                     intersect = true;
                     exact = true;
@@ -857,13 +883,16 @@ function initCursorData(gd, subplot, tracecursorOptions, fixYValues) {
                 var dLeft = cd[leftPoint];
                 x0 = dLeft.x;
                 y0 = dLeft.y;
+                y0Val = dLeft.tx;
                 var dRight = cd[rightPoint];
                 x1 = dRight.x;
                 y1 = dRight.y;
+                y1Val = dRight.tx;
 
 
                 if(intersect) {
                     if(exact) {
+                        yValue = y0Val;
                         yy = y0;
                     } else {
                         yy = getIntersectionPoint();
@@ -876,6 +905,10 @@ function initCursorData(gd, subplot, tracecursorOptions, fixYValues) {
                 var xc = xpx;
                 var yc = traceYAxis.c2p(yy);
 
+                if(!yValue) {
+                    yValue = yy;
+                }
+
                 Lib.extendFlat(pointData, {
                     color: getTraceColor(trace, di),
 
@@ -885,7 +918,7 @@ function initCursorData(gd, subplot, tracecursorOptions, fixYValues) {
 
                     y0: yc,
                     y1: yc,
-                    yLabelVal: yy
+                    yLabelVal: yValue
                 });
 
                 if(fixYValue !== null && fixYValue !== undefined) {

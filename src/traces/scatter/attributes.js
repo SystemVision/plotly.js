@@ -479,5 +479,17 @@ module.exports = {
             'Please switch to *scatterpolar* trace type.',
             'Sets the angular coordinates.'
         ].join('')
+    },
+    traceId: {
+        valType: 'string',
+        dflt: 'trace_id',
+        role: 'info',
+        editType: 'calc+clearAxisTypes',
+        description: [
+            'Trace id which is uniq',
+            'and used to find path',
+            'associated with this trace',
+            'outside of plotly.'
+        ].join(' ')
     }
 };
